@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
 import CartDrawer from "@/components/CartDrawer";
+import MarketingPixels from "@/components/MarketingPixels";
 
 const inter = Inter({ subsets: ["latin"] });
 

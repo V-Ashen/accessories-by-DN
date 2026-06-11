@@ -1,112 +1,293 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { collection, getDocs, doc, updateDoc, query, where } from "firebase/firestore";
+import { useState, useEffect } from "react";
+import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore"; // Added updateDoc
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, updatePassword, updateEmail } from "firebase/auth"; // Added updatePassword, updateEmail
 import { db } from "@/lib/firebase";
-import { useAdminAuthStore } from "@/store/adminAuthStore";
+import { useAdminAuthStore } from "@/store/adminAuthStore"; // Added
+import { Edit, Trash2 } from "lucide-react";
+
+// Initialize a secondary Firebase app for creating users without logging out the current admin
+const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+const secondaryApp = initializeApp(firebaseConfig, "SecondaryAuth");
+const secondaryAuth = getAuth(secondaryApp);
 
 export default function ManageStaffPage() {
-  const currentUserRole = useAdminAuthStore((state) => state.roleCode); // Will be 0, 1, or 2
+  const { roleCode, hasPermission } = useAdminAuthStore(); // Get current user's roleCode and permissions
   const [staff, setStaff] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [roles, setRoles] = useState<any[]>([]); // To populate role dropdown
+
+  // Form states for adding/editing
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState(""); // Only used for adding new or resetting for existing
+  const [selectedRoleName, setSelectedRoleName] = useState(""); // Stores role name (e.g., "Admin", "Cashier")
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchStaff();
+    fetchData();
   }, []);
 
-  const fetchStaff = async () => {
+  const fetchData = async () => {
+    // Fetch roles for the dropdown
+    const rolesSnap = await getDocs(collection(db, "roles"));
+    setRoles(rolesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    
+    // Fetch staff users
+    const staffSnap = await getDocs(collection(db, "users"));
+    const staffList = staffSnap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter((s: any) => s.roleCode !== 99); // Exclude regular customers
+      
+    setStaff(staffList);
+  };
+
+  const handleAddStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // RBAC: Only Master Admin (0) or Admin (1) with manage staff permission can add
+    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage staff"))) {
+        alert("Permission Denied: You cannot add staff members.");
+        return;
+    }
+    if (!selectedRoleName) return alert("Please select a role!");
+    setLoading(true);
+
     try {
-      // Fetch anyone who is NOT a normal customer (99)
-      const q = query(collection(db, "users"), where("roleCode", "in", [0, 1, 2]));
-      const snapshot = await getDocs(q);
-      const staffList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setStaff(staffList);
-    } catch (error) {
-      console.error("Error fetching staff:", error);
-    } finally {
+      const roleData = roles.find(r => r.name === selectedRoleName);
+      if (!roleData) throw new Error("Selected role not found.");
+
+      // RBAC: Admin (1) cannot add Master Admin (0)
+      if (roleCode === 1 && roleData.level === 0) {
+        alert("Permission Denied: Admins (Role 1) cannot create Master Admin accounts.");
+        setLoading(false);
+        return;
+      }
+      
+      // Create user in Firebase Auth using the secondary app
+      const { user } = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      
+      // Save user to Firestore Users table
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName: name,
+        roleName: roleData.name, // Save the role name
+        roleCode: roleData.level, // Save the role code (0, 1, 2)
+        createdAt: new Date()
+      });
+
+      alert("Staff Member Added!");
+      setName(""); setEmail(""); setPassword(""); setSelectedRoleName("");
+      fetchData(); // Refresh table
+    } catch (error: any) {
+      alert("Error adding staff: " + error.message);
+    }
+    setLoading(false);
+  };
+
+  // --- Edit User Functionality ---
+  const handleEditClick = (user: any) => {
+    // RBAC: Admin (1) cannot edit Master Admin (0)
+    if (roleCode === 1 && user.roleCode === 0) {
+      alert("Permission Denied: Admins (Role 1) cannot edit Master Admin (Role 0).");
+      return;
+    }
+    // RBAC: Staff (2) cannot edit anyone
+    if (roleCode === 2) {
+      alert("Permission Denied: Staff (Role 2) cannot edit staff members.");
+      return;
+    }
+
+    setEditingUser(user);
+    setName(user.displayName);
+    setEmail(user.email);
+    setPassword(""); // Clear password field for security
+    setSelectedRoleName(user.roleName);
+  };
+
+  const handleUpdateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    // RBAC check again before update (redundancy for safety)
+    if (roleCode === 1 && editingUser.roleCode === 0) {
+      alert("Permission Denied: Admins (Role 1) cannot update Master Admin (Role 0).");
+      return;
+    }
+    if (roleCode === 2) {
+      alert("Permission Denied: Staff (Role 2) cannot update staff members.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const roleData = roles.find(r => r.name === selectedRoleName);
+      if (!roleData) throw new Error("Selected role not found.");
+
+      // 1. Update Firestore user document
+      await updateDoc(doc(db, "users", editingUser.id), {
+        displayName: name,
+        email: email, // Update email in Firestore (Auth must be done separately)
+        roleName: roleData.name,
+        roleCode: roleData.level,
+      });
+
+      // 2. Potentially update Firebase Auth email/password (more complex for secondary app)
+      // For a full production system, you'd handle email/password updates with more secure server-side logic
+      // For now, we update the Firestore record as the primary data store for roles.
+      // If email changes, the user would need to re-login with the new email.
+      // If password changes, you'd need to re-authenticate the user for that change.
+      // This part is out of scope for a quick demo, but know it's a future consideration.
+
+      alert("Staff Member Updated!");
+      setEditingUser(null); setName(""); setEmail(""); setPassword(""); setSelectedRoleName("");
+      fetchData();
+    } catch (error: any) {
+      alert("Error updating staff: " + error.message);
+    }
+    setLoading(false);
+  };
+
+
+  const handleDeleteStaff = async (userToDelete: any) => {
+    // RBAC: Only Master Admin (0) can delete Master Admin (0)
+    // RBAC: Admin (1) cannot delete Master Admin (0)
+    if (userToDelete.roleCode === 0 && roleCode !== 0) {
+      alert("Permission Denied: Only Master Admin can delete other Master Admins.");
+      return;
+    }
+    // RBAC: Staff (2) cannot delete anyone
+    if (roleCode === 2) {
+      alert("Permission Denied: Staff (Role 2) cannot delete staff members.");
+      return;
+    }
+
+    if(confirm(`Are you sure you want to remove ${userToDelete.displayName} (${userToDelete.roleName})? This cannot be undone.`)) {
+      setLoading(true);
+      try {
+        await deleteDoc(doc(db, "users", userToDelete.id));
+        // You would also delete the user from Firebase Auth here in a full system
+        alert("Staff Member Removed!");
+        fetchData();
+      } catch (error: any) {
+        alert("Error deleting staff: " + error.message);
+      }
       setLoading(false);
     }
   };
 
-  const handleRoleChange = async (targetUserId: string, targetCurrentRole: number, newRole: number) => {
-    // ENFORCING THE BUSINESS RULE:
-    if (currentUserRole === 1 && targetCurrentRole === 0) {
-      alert("Permission Denied: Admins (Role 1) cannot modify Master Admins (Role 0).");
-      return;
-    }
-    
-    if (currentUserRole === 2) {
-      alert("Permission Denied: Staff (Role 2) cannot change roles.");
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, "users", targetUserId), { roleCode: newRole });
-      alert("Role updated successfully!");
-      fetchStaff(); // Refresh the list
-    } catch (error) {
-      console.error("Failed to update role:", error);
-    }
-  };
-
-  if (loading) return <div className="p-8">Loading Staff List...</div>;
-
-  // Prevent Role 2 from even seeing this management page
-  if (currentUserRole === 2) {
-    return <div className="p-8 text-red-600 font-bold">You do not have permission to view this page.</div>;
+  // If the current user doesn't have manage staff permission AND isn't Master Admin
+  if (roleCode !== 0 && !hasPermission("manage staff")) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto mt-10 text-center text-red-600 font-bold text-2xl">
+        Access Denied: You do not have permission to manage staff.
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8 mt-10 bg-white rounded-lg shadow border text-slate-800">
-      <h1 className="text-2xl font-bold mb-6">Manage Staff Roles</h1>
-      <p className="mb-6 text-sm text-slate-500">
-        Your current access level: <strong className="text-slate-900">Role {currentUserRole}</strong>
-      </p>
+    <div className="p-8 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-extrabold text-[#0f172a] mb-8">Manage Staff</h1>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-100 text-sm">
-              <th className="p-3 border-b">Email</th>
-              <th className="p-3 border-b">Current Role</th>
-              <th className="p-3 border-b">Change Role To</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.map((user) => {
-              // Rule: Disable the dropdown if the logged-in user is Role 1 and the target is Role 0
-              const isDropdownDisabled = currentUserRole === 1 && user.roleCode === 0;
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Add/Edit Form */}
+        <div className="bg-white border rounded-2xl p-6 shadow-sm h-fit">
+          <h2 className="text-xl font-bold mb-6">{editingUser ? "Edit Staff Member" : "Add Staff Member"}</h2>
+          <form onSubmit={editingUser ? handleUpdateStaff : handleAddStaff} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-1">Full Name</label>
+              <input required value={name} onChange={e => setName(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">Email Address</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            {!editingUser && ( // Password only for new users
+              <div>
+                <label className="block text-sm font-semibold mb-1">Password</label>
+                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-semibold mb-1">Assigned Role</label>
+              <select required value={selectedRoleName} onChange={e => setSelectedRoleName(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none bg-white focus:ring-2 focus:ring-blue-500">
+                <option value="">Select...</option>
+                {roles.map(r => (
+                  // RBAC: Admin (1) cannot assign Master Admin (0) role
+                  <option key={r.id} value={r.name} disabled={roleCode === 1 && r.level === 0}>
+                    {r.name} (Level {r.level})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="submit" disabled={loading} className={`w-full text-white font-bold py-3 rounded-lg transition mt-4 ${editingUser ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}>
+              {loading ? (editingUser ? "Updating..." : "Adding...") : (editingUser ? "Update Member" : "Add Member")}
+            </button>
+            {editingUser && (
+                <button type="button" onClick={() => {setEditingUser(null); setName(""); setEmail(""); setPassword(""); setSelectedRoleName("");}} disabled={loading} className="w-full bg-slate-400 text-white font-bold py-3 rounded-lg hover:bg-slate-500 transition mt-2">
+                    Cancel Edit
+                </button>
+            )}
+          </form>
+        </div>
 
-              return (
-                <tr key={user.id} className="border-b hover:bg-slate-50">
-                  <td className="p-3">{user.email}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${
-                      user.roleCode === 0 ? "bg-red-100 text-red-700" :
-                      user.roleCode === 1 ? "bg-blue-100 text-blue-700" :
-                      "bg-green-100 text-green-700"
+        {/* Right: Staff Table */}
+        <div className="lg:col-span-2 bg-white border rounded-2xl shadow-sm overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {staff.map(user => (
+                <tr key={user.id} className="hover:bg-slate-50">
+                  <td className="p-4 font-bold text-slate-900">{user.displayName || "Unknown"}</td>
+                  <td className="p-4 text-slate-600 text-sm">{user.email}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded text-xs font-bold tracking-wide ${
+                        user.roleCode === 0 ? "bg-red-100 text-red-700" :
+                        user.roleCode === 1 ? "bg-blue-100 text-blue-700" :
+                        "bg-green-100 text-green-700"
                     }`}>
-                      {user.roleCode === 0 ? "Master Admin (0)" : user.roleCode === 1 ? "Admin (1)" : "Staff (2)"}
+                      {user.roleName || `Level ${user.roleCode}`}
                     </span>
                   </td>
-                  <td className="p-3">
-                    <select
-                      className="border rounded p-1 text-sm bg-white disabled:opacity-50 disabled:bg-slate-100"
-                      value={user.roleCode}
-                      disabled={isDropdownDisabled}
-                      onChange={(e) => handleRoleChange(user.id, user.roleCode, Number(e.target.value))}
-                    >
-                      <option value={0}>Master Admin (0)</option>
-                      <option value={1}>Admin (1)</option>
-                      <option value={2}>Staff (2)</option>
-                      <option value={99}>Remove Admin Access (Make Customer)</option>
-                    </select>
+                  <td className="p-4 flex gap-4 text-slate-400">
+                    {/* RBAC for action buttons */}
+                    {user.roleCode === 0 ? (
+                      <span className="text-xs italic text-slate-500">Master Admin</span>
+                    ) : (
+                      <>
+                        {/* Only Admin (0 or 1) can edit if they have permission and not editing a Master Admin */}
+                        {(roleCode === 0 || (roleCode === 1 && hasPermission("manage staff"))) && (
+                          <button onClick={() => handleEditClick(user)} className="hover:text-blue-600"><Edit size={18} /></button>
+                        )}
+                        {/* Only Admin (0 or 1) can delete if they have permission and not deleting a Master Admin */}
+                        {(roleCode === 0 || (roleCode === 1 && hasPermission("manage staff"))) && (
+                          <button onClick={() => handleDeleteStaff(user)} className="hover:text-red-600"><Trash2 size={18} /></button>
+                        )}
+                      </>
+                    )}
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

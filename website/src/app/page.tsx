@@ -1,7 +1,7 @@
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ProductCard from "@/components/ProductCard";
-import Navbar from "@/components/Navbar"; // We will create this next!
+import Navbar from "@/components/Navbar"; 
 
 async function getProducts() {
   try {
