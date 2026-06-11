@@ -7,7 +7,18 @@ async function getProducts() {
   try {
     const q = query(collection(db, "products"), where("stockQuantity", ">", 0));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // We explicitly map only the plain data we need, leaving behind the complex Firebase timestamp
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        name: data.name,
+        price: data.price,
+        stockQuantity: data.stockQuantity,
+        images: data.images || []
+      };
+    });
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];

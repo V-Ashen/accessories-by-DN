@@ -36,11 +36,12 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+        let createdOrderId = "";
       // START FIRESTORE TRANSACTION
       await runTransaction(db, async (transaction) => {
         const productRefs = cart.map((item) => doc(db, "products", item.id));
         
-        // 1. READ ALL PRODUCT STOCKS FIRST (Firestore rule: all reads must happen before writes)
+        // 1. READ ALL PRODUCT STOCKS FIRST
         const productDocs = await Promise.all(productRefs.map((ref) => transaction.get(ref)));
         
         // 2. CHECK IF EVERYTHING IS IN STOCK
@@ -62,6 +63,7 @@ export default function CheckoutPage() {
 
         // 4. CREATE THE ORDER DOCUMENT
         const newOrderRef = doc(collection(db, "orders"));
+        createdOrderId = newOrderRef.id;
         transaction.set(newOrderRef, {
           userId: user.uid,
           customerEmail: user.email,
@@ -71,16 +73,32 @@ export default function CheckoutPage() {
           items: cart, // Save snapshot of the cart
           totalAmount: cartTotal(),
           paymentMethod: "Cash on Delivery",
-          status: "Pending", // Admin will update this later
+          status: "Pending",
           createdAt: new Date(),
         });
       });
       // END TRANSACTION
 
+      // TRIGGER THE EMAIL API
+      try {
+        await fetch('/api/send-order-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: fullName,
+            customerEmail: user.email,
+            shippingAddress: address,
+            totalAmount: cartTotal()
+          }),
+        });
+      } catch (emailError) {
+        console.error("Email failed to send, but order was placed:", emailError);
+      }
+
       // If we get here, the transaction succeeded!
-      alert("Order placed successfully via Cash on Delivery!");
+      alert("Order placed successfully via Cash on Delivery! A confirmation email has been sent.");
       clearCart();
-      router.push("/"); // Send back to home page
+      router.push(`/success?orderId=${createdOrderId}`); 
 
     } catch (error: any) {
       console.error("Checkout failed: ", error);

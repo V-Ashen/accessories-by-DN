@@ -11,6 +11,8 @@ interface CartItem {
 
 interface CartStore {
   cart: CartItem[];
+  isCartOpen: boolean; // NEW
+  setCartOpen: (isOpen: boolean) => void;
   addToCart: (product: any) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
@@ -19,6 +21,9 @@ interface CartStore {
 
 export const useCartStore = create<CartStore>((set, get) => ({
   cart: [],
+  isCartOpen: false,
+
+  setCartOpen: (isOpen) => set({ isCartOpen: isOpen }),
   
   addToCart: (product) => {
     set((state) => {
@@ -34,6 +39,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
                 ? { ...item, quantity: item.quantity + 1 }
                 : item
             ),
+            isCartOpen: true,
           };
         }
         alert("Maximum stock reached for this item!");
@@ -53,6 +59,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
             quantity: 1,
           },
         ],
+        isCartOpen: true,
       };
     });
   },
