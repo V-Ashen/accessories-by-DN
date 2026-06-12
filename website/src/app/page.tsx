@@ -1,14 +1,19 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore"; // Added orderBy
 import { db } from "@/lib/firebase";
 import ProductCard from "@/components/ProductCard";
-import Navbar from "@/components/Navbar"; 
+import Navbar from "@/components/Navbar";
 
 async function getProducts() {
   try {
-    const q = query(collection(db, "products"), where("stockQuantity", ">", 0));
+    // UPDATED QUERY: Only fetch products where isActive is true
+    const q = query(
+      collection(db, "products"), 
+      where("stockQuantity", ">", 0), // Still check stock
+      where("isActive", "==", true),  // <-- NEW CONDITION
+      orderBy("createdAt", "desc")    // Order by newest first
+    );
     const snapshot = await getDocs(q);
     
-    // We explicitly map only the plain data we need, leaving behind the complex Firebase timestamp
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return { 
@@ -30,7 +35,7 @@ export default async function ShopHome() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Navbar /> {/* Top Navigation Bar */}
+      <Navbar />
 
       <section className="bg-slate-50 py-16 text-center border-b">
         <h1 className="text-4xl font-extrabold text-slate-900">Accessories by DN</h1>
@@ -40,9 +45,13 @@ export default async function ShopHome() {
       <section className="max-w-7xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-slate-900 mb-8">Latest Arrivals</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {products.length === 0 ? (
+            <p className="col-span-full text-center text-slate-500">No products available right now. Check back soon!</p>
+          ) : (
+            products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
       </section>
     </main>

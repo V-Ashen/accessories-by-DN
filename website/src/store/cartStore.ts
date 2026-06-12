@@ -11,27 +11,30 @@ interface CartItem {
 
 interface CartStore {
   cart: CartItem[];
-  isCartOpen: boolean; // NEW
+  isCartOpen: boolean;
   setCartOpen: (isOpen: boolean) => void;
   addToCart: (product: any) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
-  cartTotal: () => number;
+  cartTotal: () => number; // Subtotal of items
+  deliveryCharge: () => number; // NEW: Calculates delivery
+  grandTotal: () => number; // NEW: Subtotal + Delivery
 }
+
+const FREE_DELIVERY_THRESHOLD = 3000; // LKR
+const STANDARD_DELIVERY_CHARGE = 350; // LKR
 
 export const useCartStore = create<CartStore>((set, get) => ({
   cart: [],
   isCartOpen: false,
-
-  setCartOpen: (isOpen) => set({ isCartOpen: isOpen }),
   
+  setCartOpen: (isOpen) => set({ isCartOpen: isOpen }),
+
   addToCart: (product) => {
     set((state) => {
-      // Check if item is already in cart
       const existingItem = state.cart.find((item) => item.id === product.id);
       
       if (existingItem) {
-        // If it exists and we haven't hit stock limit, increase quantity
         if (existingItem.quantity < product.stockQuantity) {
           return {
             cart: state.cart.map((item) =>
@@ -46,7 +49,6 @@ export const useCartStore = create<CartStore>((set, get) => ({
         return state;
       }
       
-      // If new item, add to cart with quantity 1
       return {
         cart: [
           ...state.cart,
@@ -74,5 +76,16 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   cartTotal: () => {
     return get().cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  },
+
+  // NEW: Calculate Delivery Charge
+  deliveryCharge: () => {
+    const subtotal = get().cartTotal();
+    return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : STANDARD_DELIVERY_CHARGE;
+  },
+
+  // NEW: Calculate Grand Total
+  grandTotal: () => {
+    return get().cartTotal() + get().deliveryCharge();
   },
 }));

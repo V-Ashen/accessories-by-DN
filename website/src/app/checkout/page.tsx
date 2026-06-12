@@ -10,15 +10,16 @@ import { collection, doc, runTransaction } from "firebase/firestore";
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { cart, cartTotal, clearCart } = useCartStore();
+  // NEW: Get deliveryCharge and grandTotal
+  const { cart, cartTotal, deliveryCharge, grandTotal, clearCart } = useCartStore();
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  // If cart is empty, don't show the checkout form
-  if (cart.length === 0 && !loading) {
+  if (cart.length === 0 && !loading && !isSuccess) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <h1 className="text-2xl font-bold mb-4">Your cart is empty!</h1>
@@ -36,15 +37,13 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-        let createdOrderId = "";
+      let createdOrderId = ""; // Variable to hold our new ID
+
       // START FIRESTORE TRANSACTION
       await runTransaction(db, async (transaction) => {
         const productRefs = cart.map((item) => doc(db, "products", item.id));
-        
-        // 1. READ ALL PRODUCT STOCKS FIRST
         const productDocs = await Promise.all(productRefs.map((ref) => transaction.get(ref)));
         
-        // 2. CHECK IF EVERYTHING IS IN STOCK
         productDocs.forEach((pDoc, index) => {
           if (!pDoc.exists()) throw new Error("Product does not exist!");
           const currentStock = pDoc.data().stockQuantity;
@@ -55,23 +54,25 @@ export default function CheckoutPage() {
           }
         });
 
-        // 3. ALL GOOD! DECREMENT STOCK
         productDocs.forEach((pDoc, index) => {
           const newStock = pDoc.data().stockQuantity - cart[index].quantity;
           transaction.update(pDoc.ref, { stockQuantity: newStock });
         });
 
-        // 4. CREATE THE ORDER DOCUMENT
+        // Create the order and grab the ID!
         const newOrderRef = doc(collection(db, "orders"));
         createdOrderId = newOrderRef.id;
+
         transaction.set(newOrderRef, {
           userId: user.uid,
           customerEmail: user.email,
           customerName: fullName,
           customerPhone: phone,
           shippingAddress: address,
-          items: cart, // Save snapshot of the cart
-          totalAmount: cartTotal(),
+          items: cart, 
+          subtotalAmount: cartTotal(), // NEW: Save subtotal
+          deliveryCharge: deliveryCharge(), // NEW: Save delivery charge
+          totalAmount: grandTotal(), // UPDATED: Use grandTotal for final amount
           paymentMethod: "Cash on Delivery",
           status: "Pending",
           createdAt: new Date(),
@@ -79,7 +80,7 @@ export default function CheckoutPage() {
       });
       // END TRANSACTION
 
-      // TRIGGER THE EMAIL API
+      // TRIGGER EMAIL API
       try {
         await fetch('/api/send-order-email', {
           method: 'POST',
@@ -88,25 +89,29 @@ export default function CheckoutPage() {
             customerName: fullName,
             customerEmail: user.email,
             shippingAddress: address,
-            totalAmount: cartTotal()
+            items: cart, // Pass items for email details
+            subtotalAmount: cartTotal(), // NEW: Pass subtotal
+            deliveryCharge: deliveryCharge(), // NEW: Pass delivery charge
+            totalAmount: grandTotal() // NEW: Pass grand total
           }),
         });
       } catch (emailError) {
-        console.error("Email failed to send, but order was placed:", emailError);
+        console.error("Email failed:", emailError);
       }
 
-      // If we get here, the transaction succeeded!
-      alert("Order placed successfully via Cash on Delivery! A confirmation email has been sent.");
+      // SUCCESS ROUTING
+      setIsSuccess(true);
       clearCart();
-      router.push(`/success?orderId=${createdOrderId}`); 
+      router.push(`/success?orderId=${createdOrderId}`);
 
     } catch (error: any) {
       console.error("Checkout failed: ", error);
       alert(error.message || "Checkout failed. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
+
+  const currentDeliveryCharge = deliveryCharge(); // Calculate once for rendering
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -133,8 +138,8 @@ export default function CheckoutPage() {
               Payment Method: <strong>Cash on Delivery (COD)</strong>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-lg hover:bg-slate-800 transition mt-6">
-              {loading ? "Processing Order..." : `Confirm Order (LKR ${cartTotal()})`}
+            <button type="submit" disabled={loading || isSuccess} className="w-full bg-slate-900 text-white font-bold py-4 rounded-lg hover:bg-slate-800 transition mt-6">
+              {loading || isSuccess ? "Processing Order..." : `Confirm Order (LKR ${grandTotal()})`}
             </button>
           </form>
         </div>
@@ -154,9 +159,29 @@ export default function CheckoutPage() {
               </div>
             ))}
           </div>
-          <div className="border-t pt-4 flex justify-between items-center text-lg font-bold">
-            <span>Total:</span>
+          
+          {/* Subtotal */}
+          <div className="border-t pt-4 flex justify-between items-center text-md font-semibold">
+            <span>Subtotal:</span>
             <span>LKR {cartTotal()}</span>
+          </div>
+
+          {/* Delivery Charge (NEW) */}
+          <div className="pt-2 flex justify-between items-center text-md font-semibold">
+            <span>Delivery:</span>
+            <span>
+              {currentDeliveryCharge === 0 ? (
+                <span className="text-green-600">FREE</span>
+              ) : (
+                `LKR ${currentDeliveryCharge}`
+              )}
+            </span>
+          </div>
+
+          {/* Grand Total */}
+          <div className="border-t mt-4 pt-4 flex justify-between items-center text-lg font-bold text-slate-900">
+            <span>Total:</span>
+            <span>LKR {grandTotal()}</span>
           </div>
         </div>
 
