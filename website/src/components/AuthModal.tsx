@@ -15,18 +15,15 @@ export default function AuthModal() {
 
   if (!isAuthModalOpen) return null;
 
-  // Function to save user to Firestore database
   const saveUserToDB = async (user: any) => {
     const userRef = doc(db, "users", user.uid);
     const docSnap = await getDoc(userRef);
-    
-    // Only create if they don't exist yet (Role 99 = Standard Customer)
     if (!docSnap.exists()) {
       await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || "Customer",
-        roleCode: 99, 
+        roleCode: 99,
         createdAt: new Date(),
       });
     }
@@ -38,7 +35,7 @@ export default function AuthModal() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       await saveUserToDB(result.user);
-      setAuthModalOpen(false); // Close modal on success
+      setAuthModalOpen(false);
     } catch (error) {
       alert("Authentication failed!");
     } finally {
@@ -65,46 +62,104 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-      <div className="bg-white w-full max-w-md rounded-2xl p-8 shadow-2xl relative">
-        {/* Close Button */}
-        <button onClick={() => setAuthModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800">
-          ✕
-        </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-[#FAF9F7] w-full max-w-sm rounded-2xl border border-[#E0DDD6] overflow-hidden">
 
-        <h2 className="text-2xl font-bold text-center text-slate-900 mb-6">
-          {isLogin ? "Welcome Back" : "Create Account"}
-        </h2>
-
-        <form onSubmit={handleEmailAuth} className="space-y-4">
-          <input 
-            type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
-          />
-          <input 
-            type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
-          />
-          <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition">
-            {loading ? "Please wait..." : (isLogin ? "Sign In" : "Sign Up")}
+        {/* Header band */}
+        <div className="bg-[#1C1C1E] px-8 py-6 relative">
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-0.5">
+            {isLogin ? "Welcome back" : "Join us"}
+          </p>
+          <h2
+            className="text-2xl font-semibold text-white tracking-wide"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            {isLogin ? "Sign In" : "Create Account"}
+          </h2>
+          <button
+            onClick={() => setAuthModalOpen(false)}
+            aria-label="Close"
+            className="absolute top-5 right-5 w-7 h-7 flex items-center justify-center rounded-full border border-white/20 text-white/50 hover:border-white/50 hover:text-white transition-all duration-200"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
-        </form>
-
-        <div className="my-6 flex items-center before:flex-1 before:border-t before:border-slate-200 after:flex-1 after:border-t after:border-slate-200">
-          <span className="mx-4 text-sm text-slate-400">OR</span>
         </div>
 
-        <button onClick={handleGoogleAuth} disabled={loading} className="w-full flex items-center justify-center gap-3 border py-3 rounded-lg hover:bg-slate-50 transition font-medium text-slate-700">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-          Continue with Google
-        </button>
+        {/* Body */}
+        <div className="px-8 py-7">
 
-        <p className="mt-6 text-center text-sm text-slate-600">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-          <button onClick={() => setIsLogin(!isLogin)} className="ml-1 font-bold text-slate-900 hover:underline">
-            {isLogin ? "Sign Up" : "Log In"}
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-[#E0DDD6] bg-white rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-[#E0DDD6] bg-white rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#1C1C1E] text-[#FAF9F7] text-[10px] font-semibold tracking-widest uppercase py-3.5 rounded-full hover:bg-[#333] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            >
+              {loading ? "Please wait…" : isLogin ? "Sign In" : "Sign Up"}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="my-5 flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#E0DDD6]" />
+            <span className="text-[10px] tracking-widest uppercase text-[#bbb]">or</span>
+            <div className="flex-1 h-px bg-[#E0DDD6]" />
+          </div>
+
+          {/* Google */}
+          <button
+            onClick={handleGoogleAuth}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2.5 border border-[#E0DDD6] bg-white text-[#1C1C1E] text-xs font-semibold tracking-wide py-3 rounded-full hover:border-[#C9A84C] hover:bg-[#FAF9F7] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-4 h-4"
+            />
+            Continue with Google
           </button>
-        </p>
+
+          {/* Toggle */}
+          <p className="mt-6 text-center text-xs text-[#888]">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="ml-1.5 font-semibold text-[#1C1C1E] hover:text-[#C9A84C] transition-colors duration-150"
+            >
+              {isLogin ? "Sign Up" : "Log In"}
+            </button>
+          </p>
+        </div>
+
       </div>
     </div>
   );
