@@ -1,59 +1,34 @@
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore"; // Added orderBy
+import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
+import ProductCard from "@/components/ProductCard"; // Still needed by ProductGridPaginated indirectly
+import HeroSlider from "@/components/HeroSlider"; // NEW
+import ProductGridPaginated from "@/components/ProductGridPaginated"; // NEW
+import ServicesSection from "@/components/ServicesSection";
+import AboutSection from "@/components/AboutSection"; 
+import ContactSection from "@/components/ContactSection";
 
-async function getProducts() {
-  try {
-    // UPDATED QUERY: Only fetch products where isActive is true
-    const q = query(
-      collection(db, "products"), 
-      where("stockQuantity", ">", 0), // Still check stock
-      where("isActive", "==", true),  // <-- NEW CONDITION
-      orderBy("createdAt", "desc")    // Order by newest first
-    );
-    const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      return { 
-        id: doc.id, 
-        name: data.name,
-        price: data.price,
-        stockQuantity: data.stockQuantity,
-        images: data.images || []
-      };
-    });
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    return [];
-  }
-}
-
+// No direct getProducts call here anymore, ProductGridPaginated handles it
 export default async function ShopHome() {
-  const products = await getProducts();
-
   return (
-    <main className="min-h-screen bg-white">
-      <Navbar />
+    <main className="min-h-screen bg-white ">
+      
+      
+      {/* 1. Hero Section (with Moving Banners & Catchphrase) */}
+      <HeroSlider />
 
-      <section className="bg-slate-50 py-16 text-center border-b">
-        <h1 className="text-4xl font-extrabold text-slate-900">Accessories by DN</h1>
-        <p className="mt-4 text-lg text-slate-600">Trendy aesthetic jewelry delivered in Sri Lanka.</p>
-      </section>
+      {/* 1.1. Trending & Latest Items (Paginated) */}
+      <ProductGridPaginated />
 
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-slate-900 mb-8">Latest Arrivals</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.length === 0 ? (
-            <p className="col-span-full text-center text-slate-500">No products available right now. Check back soon!</p>
-          ) : (
-            products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
-          )}
-        </div>
-      </section>
+      {/* 2. Services Section (Why Choose Us & Reviews) */}
+      <ServicesSection />
+
+            {/* 3. About Section (Our Story & Policies) */}
+      <AboutSection /> {/* <-- RENDER IT HERE */}
+
+      {/* 4. Contact Section */}
+      <ContactSection /> {/* <-- RENDER IT HERE */}
+
     </main>
   );
 }

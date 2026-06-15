@@ -4,7 +4,8 @@ import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth"; // <-- Import signOut
+import { signOut } from "firebase/auth";
+import Image from "next/image"; // Import Next.js Image component
 
 export default function Navbar() {
   const router = useRouter();
@@ -13,33 +14,29 @@ export default function Navbar() {
   
   const { user, setAuthModalOpen } = useAuthStore();
 
-  const { setCartOpen } = useCartStore(); // Add this at the top with your other store hooks
-
   const handleCartClick = () => {
-    setCartOpen(true);
+    useCartStore.getState().setCartOpen(true); // Open the cart drawer
   };
 
-  // NEW: Logout Function
   const handleLogout = async () => {
     try {
-      await signOut(auth); // Tells Firebase to log out
-      router.push("/"); // Send them to the home page just in case they were on checkout
+      await signOut(auth);
+      router.push("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
   return (
-    <nav className="bg-white border-b sticky top-0 z-50">
+    <nav className="bg-white border-b sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo (Clicking it goes to home) */}
-        <button onClick={() => router.push("/")} className="font-bold text-xl tracking-tight text-slate-900">
-          DN.
+        {/* Logo */}
+        <button onClick={() => router.push("/")} className="flex items-center gap-2">
+          <Image src="/logo.jpg" alt="Accessories by DN Logo" width={40} height={40} /> {/* Adjust width/height as needed */}
+          <span className="font-extrabold text-xl tracking-tight text-slate-900 hidden sm:block">Accessories by DN</span>
         </button>
         
         <div className="flex items-center gap-4">
-          
-          {/* USER INFO & LOGOUT */}
           {user ? (
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-slate-600 hidden sm:block">
@@ -53,16 +50,14 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            // Show a login button if they aren't logged in
             <button 
               onClick={() => setAuthModalOpen(true)}
               className="text-sm font-bold text-slate-600 hover:text-slate-900 transition"
             >
-              Log In
+              Log In / Register
             </button>
           )}
 
-          {/* CART BUTTON */}
           <button onClick={handleCartClick} className="relative p-2 text-slate-600 hover:text-slate-900 transition">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -73,7 +68,6 @@ export default function Navbar() {
               </span>
             )}
           </button>
-          
         </div>
       </div>
     </nav>
