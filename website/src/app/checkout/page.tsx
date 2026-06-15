@@ -55,18 +55,26 @@ export default function CheckoutPage() {
         const productRefs = cart.map((item) => doc(db, "products", item.id));
         const productDocs = await Promise.all(productRefs.map((ref) => transaction.get(ref)));
 
+        // 1. CHECK IF EVERYTHING IS IN STOCK (Type-safe)
         productDocs.forEach((pDoc, index) => {
-          if (!pDoc.exists()) throw new Error("Product does not exist!");
-          const currentStock = pDoc.data().stockQuantity;
+          const data = pDoc.data();
+          if (!pDoc.exists() || !data) {
+            throw new Error("Product does not exist!");
+          }
+          const currentStock = data.stockQuantity;
           const requestedQty = cart[index].quantity;
           if (currentStock < requestedQty) {
             throw new Error(`Sorry, "${cart[index].name}" is out of stock!`);
           }
         });
 
+        // 2. ALL GOOD! DECREMENT STOCK (Type-safe)
         productDocs.forEach((pDoc, index) => {
-          const newStock = pDoc.data().stockQuantity - cart[index].quantity;
-          transaction.update(pDoc.ref, { stockQuantity: newStock });
+          const data = pDoc.data();
+          if (data) {
+            const newStock = data.stockQuantity - cart[index].quantity;
+            transaction.update(pDoc.ref, { stockQuantity: newStock });
+          }
         });
 
         const newOrderRef = doc(collection(db, "orders"));
@@ -74,7 +82,7 @@ export default function CheckoutPage() {
 
         transaction.set(newOrderRef, {
           userId: user.uid,
-          customerEmail: user.email,
+          customerEmail: user.email || "",
           customerName: fullName,
           customerPhone: phone,
           shippingAddress: address,
@@ -94,7 +102,7 @@ export default function CheckoutPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             customerName: fullName,
-            customerEmail: user.email,
+            customerEmail: user.email || "",
             shippingAddress: address,
             items: cart,
             subtotalAmount: cartTotal(),
