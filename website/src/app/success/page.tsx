@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react"; // 1. Added Suspense
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SuccessPage() {
+// 2. Extract the actual success UI content into its own component
+function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orderId, setOrderId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Grab the order ID from the URL (e.g. /success?orderId=123XYZ)
     const id = searchParams.get("orderId");
     if (id) {
       setOrderId(id);
     } else {
-      // If there is no order ID, someone just typed /success in the URL. Send them home.
       router.push("/");
     }
   }, [searchParams, router]);
@@ -39,7 +38,9 @@ export default function SuccessPage() {
 
         <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-8">
           <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-1">Your Tracking Number</p>
-          <p className="text-2xl font-mono font-bold text-slate-900 tracking-widest">{orderId.slice(-8).toUpperCase()}</p>
+          <p className="text-2xl font-mono font-bold text-slate-900 tracking-widest">
+            {orderId.slice(-8).toUpperCase()}
+          </p>
         </div>
 
         <p className="text-sm text-slate-500 mb-8">
@@ -54,5 +55,20 @@ export default function SuccessPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+// 3. Export the main page component wrapped in a Suspense Boundary
+export default function SuccessPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-slate-500">
+          Loading order details...
+        </div>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
   );
 }
