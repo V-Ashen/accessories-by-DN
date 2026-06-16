@@ -1,72 +1,60 @@
 "use client";
 
 import { useCartStore } from "@/store/cartStore";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ProductCard({ product }: { product: any }) {
   const addToCart = useCartStore((state) => state.addToCart);
-  const [added, setAdded] = useState(false);
+  const router = useRouter();
 
-  const handleAddToCart = () => {
-    addToCart(product);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+  // Generate a clean SEO slug from the product name
+  // e.g. "Desktop Makeup Mirror" -> "desktop-makeup-mirror"
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+  };
+
+  const handleCardClick = () => {
+    const slug = generateSlug(product.name);
+    // Route to /product/[slug] and pass the actual ID as a query param for fast Firestore lookup
+    router.push(`/product/${slug}?id=${product.id}`);
   };
 
   return (
-    <div className="group flex flex-col bg-[#FAF9F7] border border-[#E0DDD6] rounded-2xl overflow-hidden hover:border-[#C9A84C] transition-all duration-300">
-
+    <div 
+      onClick={handleCardClick}
+      className="group flex flex-col bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+    >
       {/* Product Image */}
-      <div className="relative aspect-square bg-[#F0EDE8] overflow-hidden">
+      <div className="relative aspect-square bg-slate-100 overflow-hidden">
         <img
           src={product.images[0] || "/placeholder-image.jpg"}
-          alt={product.name}
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+          alt={`${product.name} - Trendy Aesthetic Accessory | Accessories by DN Sri Lanka`}
+          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
         />
-
-        {/* Gradient bottom fade */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent" />
-
-        {/* Low Stock Badge */}
-        {product.stockQuantity <= 5 && (
-          <span className="absolute top-3 left-3 bg-[#1C1C1E] text-[#C9A84C] text-[10px] font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full">
-            Only {product.stockQuantity} left
+        {product.stockQuantity <= 5 && product.stockQuantity > 0 && (
+          <span className="absolute top-2 left-2 bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-1 rounded">
+            Only {product.stockQuantity} left!
           </span>
         )}
-
-        {/* Quick-add overlay on hover */}
-        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-          <button
-            onClick={handleAddToCart}
-            className="w-full py-3 bg-[#1C1C1E]/90 backdrop-blur-sm text-white text-xs font-semibold tracking-widest uppercase hover:bg-[#1C1C1E] transition-colors duration-150"
-          >
-            {added ? "✓ Added" : "Quick Add"}
-          </button>
-        </div>
       </div>
 
       {/* Product Info */}
       <div className="p-4 flex flex-col flex-grow">
-        <h3
-          className="text-[15px] font-semibold text-[#1C1C1E] mb-0.5 leading-snug tracking-wide truncate"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-        >
-          {product.name}
-        </h3>
-        <p className="text-xs text-[#888] uppercase tracking-widest mb-4 font-medium">
-          LKR {product.price.toLocaleString()}
-        </p>
-
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">{product.name}</h3>
+        <p className="text-slate-600 mb-4 font-medium">LKR {product.price.toLocaleString()}</p>
+        
         {/* Add to Cart Button */}
-        <button
-          onClick={handleAddToCart}
-          className={`mt-auto w-full py-2.5 rounded-full text-xs font-semibold tracking-widest uppercase border transition-all duration-200 active:scale-95 ${
-            added
-              ? "bg-[#C9A84C] border-[#C9A84C] text-[#1C1C1E]"
-              : "bg-transparent border-[#1C1C1E] text-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#FAF9F7]"
-          }`}
+        <button 
+          onClick={(e) => {
+            e.stopPropagation(); // <-- CRITICAL: Prevents card click navigation!
+            addToCart(product);
+          }}
+          className="mt-auto w-full bg-slate-900 text-white font-semibold py-2 rounded-lg hover:bg-slate-800 transition active:scale-95"
         >
-          {added ? "✓ Added to Cart" : "Add to Cart"}
+          Add to Cart
         </button>
       </div>
     </div>

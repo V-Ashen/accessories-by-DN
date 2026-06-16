@@ -6,6 +6,7 @@ import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 import { db } from "@/lib/firebase";
 import { collection, doc, runTransaction } from "firebase/firestore";
+import { Landmark, CreditCard, Banknote, Upload } from "lucide-react"; // Vector icons for payment methods
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +18,18 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // --- Payment Method States (NEW) ---
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" | "bank" | "card"
+  
+  // Bank Slip dummy state
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+
+  // Card Form dummy states
+  const [cardNumber, setCardCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [cardName, setCardName] = useState("");
 
   if (cart.length === 0 && !loading && !isSuccess) {
     return (
@@ -46,6 +59,16 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (!user) return alert("Please log in first!");
 
+    // Validate based on selected method
+    if (paymentMethod === "bank" && !receiptFile) {
+      alert("Please upload your bank receipt slip!");
+      return;
+    }
+    if (paymentMethod === "card" && (!cardNumber || !cardExpiry || !cardCvv || !cardName)) {
+      alert("Please fill in all credit card details!");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -55,7 +78,6 @@ export default function CheckoutPage() {
         const productRefs = cart.map((item) => doc(db, "products", item.id));
         const productDocs = await Promise.all(productRefs.map((ref) => transaction.get(ref)));
 
-        // 1. CHECK IF EVERYTHING IS IN STOCK (Type-safe)
         productDocs.forEach((pDoc, index) => {
           const data = pDoc.data();
           if (!pDoc.exists() || !data) {
@@ -68,7 +90,6 @@ export default function CheckoutPage() {
           }
         });
 
-        // 2. ALL GOOD! DECREMENT STOCK (Type-safe)
         productDocs.forEach((pDoc, index) => {
           const data = pDoc.data();
           if (data) {
@@ -80,6 +101,7 @@ export default function CheckoutPage() {
         const newOrderRef = doc(collection(db, "orders"));
         createdOrderId = newOrderRef.id;
 
+        // Save order with chosen payment method
         transaction.set(newOrderRef, {
           userId: user.uid,
           customerEmail: user.email || "",
@@ -90,7 +112,7 @@ export default function CheckoutPage() {
           subtotalAmount: cartTotal(),
           deliveryCharge: deliveryCharge(),
           totalAmount: grandTotal(),
-          paymentMethod: "Cash on Delivery",
+          paymentMethod: paymentMethod === "cod" ? "Cash on Delivery" : paymentMethod === "bank" ? "Bank Transfer" : "Card Payment",
           status: "Pending",
           createdAt: new Date(),
         });
@@ -127,7 +149,7 @@ export default function CheckoutPage() {
   const currentDeliveryCharge = deliveryCharge();
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF9F7] py-16 px-4 sm:px-6 lg:px-8 text-slate-800">
       <div className="max-w-4xl mx-auto">
 
         {/* Page header */}
@@ -145,89 +167,222 @@ export default function CheckoutPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-          {/* Left: Shipping Form */}
-          <div className="bg-white border border-[#E0DDD6] rounded-2xl p-8">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
-              Step 1
-            </p>
-            <h2
-              className="text-xl font-semibold text-[#1C1C1E] tracking-wide mb-6"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-            >
-              Delivery Details
-            </h2>
-
-            <form onSubmit={handleCheckout} className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
-                  Full Name
-                </label>
-                <input
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="DN Customer"
-                  className="w-full border border-[#E0DDD6] bg-[#FAF9F7] rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
-                  Phone Number
-                </label>
-                <input
-                  required
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="07X XXX XXXX"
-                  className="w-full border border-[#E0DDD6] bg-[#FAF9F7] rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
-                  Delivery Address
-                </label>
-                <textarea
-                  required
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  rows={3}
-                  placeholder="No 123, Main Street, Colombo 03"
-                  className="w-full border border-[#E0DDD6] bg-[#FAF9F7] rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200 resize-none"
-                />
-              </div>
-
-              {/* COD notice */}
-              <div className="flex items-center gap-3 bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl px-4 py-3">
-                <div className="w-7 h-7 rounded-full bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 text-[#C9A84C]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold tracking-widest uppercase text-[#888]">Payment Method</p>
-                  <p className="text-sm font-semibold text-[#1C1C1E]">Cash on Delivery (COD)</p>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || isSuccess}
-                className="w-full bg-[#1C1C1E] text-[#FAF9F7] text-xs font-semibold tracking-widest uppercase py-4 rounded-full hover:bg-[#333] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+          {/* Left: Shipping & Payment Form */}
+          <div className="bg-white border border-[#E0DDD6] rounded-2xl p-8 space-y-8">
+            
+            {/* Step 1: Delivery Details */}
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
+                Step 1
+              </p>
+              <h2
+                className="text-xl font-semibold text-[#1C1C1E] tracking-wide mb-6"
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
               >
-                {loading || isSuccess
-                  ? "Processing Order..."
-                  : `Confirm Order — LKR ${grandTotal().toLocaleString()}`}
-              </button>
-            </form>
+                Delivery Details
+              </h2>
+
+              <form onSubmit={handleCheckout} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="DN Customer"
+                    className="w-full border border-[#E0DDD6] bg-[#FAF9F7] rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+                      Phone Number
+                    </label>
+                    <input
+                      required
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="07X XXX XXXX"
+                      className="w-full border border-[#E0DDD6] bg-[#FAF9F7] rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+                    Delivery Address
+                  </label>
+                  <textarea
+                    required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    rows={3}
+                    placeholder="No 123, Main Street, Colombo 03"
+                    className="w-full border border-[#E0DDD6] bg-[#FAF9F7] rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200 resize-none"
+                  />
+                </div>
+              </form>
+            </div>
+
+            {/* Step 2: Payment Selector (NEW) */}
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
+                Step 2
+              </p>
+              <h2
+                className="text-xl font-semibold text-[#1C1C1E] tracking-wide mb-6"
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              >
+                Payment Method
+              </h2>
+
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {/* Option 1: COD */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`flex flex-col items-center justify-center p-4 border rounded-xl transition ${
+                    paymentMethod === "cod" ? "border-[#C9A84C] bg-[#FAF9F7]" : "border-[#E0DDD6] hover:bg-slate-50"
+                  }`}
+                >
+                  <Banknote size={20} className={paymentMethod === "cod" ? "text-[#C9A84C]" : "text-slate-400"} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider mt-2">COD</span>
+                </button>
+
+                {/* Option 2: Bank Transfer */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("bank")}
+                  className={`flex flex-col items-center justify-center p-4 border rounded-xl transition ${
+                    paymentMethod === "bank" ? "border-[#C9A84C] bg-[#FAF9F7]" : "border-[#E0DDD6] hover:bg-slate-50"
+                  }`}
+                >
+                  <Landmark size={20} className={paymentMethod === "bank" ? "text-[#C9A84C]" : "text-slate-400"} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider mt-2">Bank</span>
+                </button>
+
+                {/* Option 3: Card */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={`flex flex-col items-center justify-center p-4 border rounded-xl transition ${
+                    paymentMethod === "card" ? "border-[#C9A84C] bg-[#FAF9F7]" : "border-[#E0DDD6] hover:bg-slate-50"
+                  }`}
+                >
+                  <CreditCard size={20} className={paymentMethod === "card" ? "text-[#C9A84C]" : "text-slate-400"} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider mt-2">Card</span>
+                </button>
+              </div>
+
+              {/* Dynamic Payment Details Display */}
+              
+              {/* COD Content */}
+              {paymentMethod === "cod" && (
+                <div className="flex items-center gap-3 bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl px-4 py-3 animate-in fade-in duration-200">
+                  <div className="w-8 h-8 rounded-full bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
+                    <Banknote size={16} className="text-[#C9A84C]" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold tracking-wider uppercase text-[#888]">Cash on Delivery</p>
+                    <p className="text-xs text-slate-500">Pay with cash upon delivery to your doorstep.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Bank Transfer Content */}
+              {paymentMethod === "bank" && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-4 text-xs space-y-1.5 text-slate-600">
+                    <p className="font-bold text-slate-800 text-sm mb-1">Accessories by DN Bank Details:</p>
+                    <p><strong>Bank:</strong> Commercial Bank of Ceylon</p>
+                    <p><strong>Branch:</strong> Mirihana Branch</p>
+                    <p><strong>Account Name:</strong> D. N. Accessories (Pvt) Ltd</p>
+                    <p><strong>Account Number:</strong> 811061864234</p>
+                  </div>
+                  
+                  {/* Dummy File Upload Input */}
+                  <div className="border-2 border-dashed border-[#E0DDD6] rounded-xl p-4 bg-slate-50 flex flex-col items-center justify-center">
+                    <input 
+                      type="file" 
+                      id="receipt" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => setReceiptFile(e.target.files ? e.target.files[0] : null)}
+                    />
+                    <label htmlFor="receipt" className="flex flex-col items-center cursor-pointer">
+                      <Upload size={24} className="text-slate-400 mb-2" />
+                      <span className="text-xs font-bold text-slate-700">
+                        {receiptFile ? receiptFile.name : "Upload Bank Slip / Receipt"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 mt-1">PNG, JPG, PDF up to 5MB</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Card Payment Content */}
+              {paymentMethod === "card" && (
+                <div className="space-y-3 bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-4 animate-in fade-in duration-200">
+                  <p className="font-bold text-slate-800 text-sm mb-2">Credit / Debit Card</p>
+                  
+                  <div className="space-y-3">
+                    <input 
+                      type="text" 
+                      placeholder="Cardholder Name" 
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      className="w-full border border-[#E0DDD6] bg-white rounded-lg px-3 py-2 text-xs text-[#1C1C1E] outline-none"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Card Number" 
+                      value={cardNumber}
+                      onChange={(e) => setCardCardNumber(e.target.value)}
+                      className="w-full border border-[#E0DDD6] bg-white rounded-lg px-3 py-2 text-xs text-[#1C1C1E] outline-none"
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        type="text" 
+                        placeholder="MM/YY" 
+                        value={cardExpiry}
+                        onChange={(e) => setCardExpiry(e.target.value)}
+                        className="border border-[#E0DDD6] bg-white rounded-lg px-3 py-2 text-xs text-[#1C1C1E] outline-none"
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="CVC" 
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value)}
+                        className="border border-[#E0DDD6] bg-white rounded-lg px-3 py-2 text-xs text-[#1C1C1E] outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Form submit triggers the unified handleCheckout function */}
+            <button
+              onClick={handleCheckout}
+              disabled={loading || isSuccess}
+              className="w-full bg-[#1C1C1E] text-[#FAF9F7] text-xs font-semibold tracking-widest uppercase py-4 rounded-full hover:bg-[#333] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+            >
+              {loading || isSuccess
+                ? "Processing Order..."
+                : `Confirm Order — LKR ${grandTotal().toLocaleString()}`}
+            </button>
+
           </div>
 
           {/* Right: Order Summary */}
           <div className="bg-white border border-[#E0DDD6] rounded-2xl p-8 h-fit">
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
-              Step 2
+              Step 3
             </p>
             <h2
               className="text-xl font-semibold text-[#1C1C1E] tracking-wide mb-6"

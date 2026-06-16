@@ -2,16 +2,18 @@
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const cartItems = useCartStore((state) => state.cart);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-
+  
   const { user, setAuthModalOpen } = useAuthStore();
 
   const handleCartClick = () => {
@@ -27,113 +29,78 @@ export default function Navbar() {
     }
   };
 
-  const initials = user?.email
-    ? user.email[0].toUpperCase()
-    : "?";
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Shop", path: "/shop" },
+    { name: "About", path: "/#about" },
+    { name: "Contact", path: "/#contact" },
+  ];
 
   return (
-    <nav className="bg-[#FAF9F7] border-b border-[#E0DDD6] sticky top-0 z-50">
+    <nav className="bg-white border-b fixed top-0 left-0 w-full z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-
-        {/* Logo */}
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-3 group"
-        >
-          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-[#E0DDD6] group-hover:ring-[#C9A84C] transition-all duration-200">
-            <Image
-              src="/logo.jpg"
-              alt="Accessories by DN Logo"
-              width={36}
-              height={36}
-              className="object-cover w-full h-full"
-            />
-          </div>
-          <span
-            className="hidden sm:block font-semibold text-[#1C1C1E] tracking-[0.1em] uppercase text-sm"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "17px" }}
-          >
+        
+        {/* Left: Logo */}
+        <button onClick={() => router.push("/")} className="flex items-center gap-2">
+          <Image src="/logo.jpg" alt="Accessories by DN Logo" width={40} height={40} className="rounded-full" />
+          <span className="font-extrabold text-lg tracking-tight text-slate-900 hidden md:block">
             Accessories by DN
           </span>
         </button>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-3">
-
+        {/* Middle: Navigation Links (NEW) */}
+        <div className="flex items-center gap-6 md:gap-8">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.path;
+            return (
+              <Link 
+                key={link.name} 
+                href={link.path}
+                className={`text-sm font-semibold tracking-wider uppercase transition-colors duration-200 ${
+                  isActive ? "text-[#C9A84C]" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
+        </div>
+        
+        {/* Right: User Auth & Cart */}
+        <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-3">
-              {/* Avatar + email */}
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
-                  <span className="text-[#C9A84C] text-xs font-semibold leading-none">
-                    {initials}
-                  </span>
-                </div>
-                <span className="text-xs text-[#666] max-w-[140px] truncate">
-                  {user.email}
-                </span>
-              </div>
-
-              {/* Divider */}
-              <div className="hidden sm:block w-px h-5 bg-[#E0DDD6]" />
-
-              {/* Logout button — visible pill */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 text-xs font-medium text-[#1C1C1E] tracking-wide uppercase border border-[#1C1C1E] px-3 py-1.5 rounded-full hover:bg-[#1C1C1E] hover:text-[#FAF9F7] transition-all duration-200"
+              <span className="text-sm font-medium text-slate-600 hidden lg:block">
+                {user.email}
+              </span>
+              <button 
+                onClick={handleLogout} 
+                className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition"
               >
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
-                  />
-                </svg>
                 Logout
               </button>
             </div>
           ) : (
-            <button
+            <button 
               onClick={() => setAuthModalOpen(true)}
-              className="text-xs font-medium text-[#1C1C1E] tracking-widest uppercase border border-[#1C1C1E] px-4 py-1.5 rounded-full hover:bg-[#1C1C1E] hover:text-[#FAF9F7] transition-all duration-200"
+              className="text-sm font-bold text-slate-600 hover:text-slate-900 transition"
             >
-              Log In / Register
+              Log In
             </button>
           )}
 
-          {/* Cart button — clearly visible */}
-          <button
-            onClick={handleCartClick}
-            className="relative flex items-center justify-center w-10 h-10 rounded-full border border-[#1C1C1E] text-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#FAF9F7] transition-all duration-200 group"
-            aria-label="Open cart"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth={1.75}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-              />
+          <button onClick={handleCartClick} className="relative p-2 text-slate-600 hover:text-slate-900 transition">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-[10px] font-bold text-[#1C1C1E] bg-[#C9A84C] rounded-full leading-none">
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
                 {totalItems}
               </span>
             )}
           </button>
-
         </div>
+
       </div>
     </nav>
   );
