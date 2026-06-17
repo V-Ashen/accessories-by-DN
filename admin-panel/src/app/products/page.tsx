@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, addDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAdminAuthStore } from "@/store/adminAuthStore";
-import { Edit, Trash2, PlusCircle, ToggleLeft, ToggleRight, Save, X } from "lucide-react";
+import { Edit, Save, X, Trash2, Plus, ToggleLeft, ToggleRight, Star, Search, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Product {
@@ -14,6 +14,7 @@ interface Product {
   stockQuantity: number;
   images: string[];
   isActive: boolean;
+  isFeatured?: boolean; // NEW: Featured flag
   category?: string;
   description?: string;
   createdAt: any;
@@ -23,15 +24,17 @@ const generateAIPlaceholderDescription = (name: string) => {
   return `${name} is an exquisite addition to our exclusive catalog. Crafted with meticulous attention to detail, this item embodies the perfect blend of modern aesthetic appeal and practical durability. Designed for daily use, it adds a touch of elegance and convenience to your lifestyle.`;
 };
 
-const DEFAULT_CATEGORIES = ["Kitchenware", "Home Decor", "Tech", "Cosmetics"];
-
 export default function ManageProductsPage() {
   const { roleCode, hasPermission } = useAdminAuthStore();
   const router = useRouter();
   
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<any[]>([]); // Dynamic Categories from DB
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Search & Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
 
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -41,8 +44,6 @@ export default function ManageProductsPage() {
   const [editStock, setEditStock] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editDescription, setEditDescription] = useState("");
-
-  // Inline "Add New Category" States (NEW)
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
@@ -53,36 +54,17 @@ export default function ManageProductsPage() {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch & Auto-Seed Categories
+      // Fetch Categories
       const catSnapshot = await getDocs(collection(db, "categories"));
       let fetchedCats = catSnapshot.docs.map(doc => {
         const rawName = doc.data().name.trim();
-        const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
-        return { id: doc.id, name: formattedName };
+        return { id: doc.id, name: rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase() };
       });
-
-      if (catSnapshot.empty) {
-        console.log("Categories collection is empty. Auto-seeding defaults...");
-        const seedPromises = DEFAULT_CATEGORIES.map(cat => 
-          addDoc(collection(db, "categories"), { name: cat, createdAt: new Date() })
-        );
-        await Promise.all(seedPromises);
-        
-        const freshCatSnapshot = await getDocs(collection(db, "categories"));
-        fetchedCats = freshCatSnapshot.docs.map(doc => {
-          const rawName = doc.data().name.trim();
-          const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
-          return { id: doc.id, name: formattedName };
-        });
-      }
-
-      // CRITICAL: Filter out duplicate category names from the Admin dropdown state!
-      const uniqueCats = fetchedCats.filter((cat, index, self) =>
-        index === self.findIndex((c) => c.name === cat.name)
-      );
+      // Remove duplicates
+      const uniqueCats = fetchedCats.filter((cat, index, self) => index === self.findIndex((c) => c.name === cat.name));
       setCategories(uniqueCats);
 
-      // 2. Fetch Products
+      // Fetch Products
       const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       const fetchedProducts = snapshot.docs.map(doc => ({
@@ -90,64 +72,92 @@ export default function ManageProductsPage() {
         ...doc.data()
       })) as Product[];
       setProducts(fetchedProducts);
-
     } catch (error) {
       console.error("Error fetching database data:", error);
     } finally {
       setLoading(false);
     }
   };
-  const handleEditClick = (product: Product) => {
-    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) {
-      alert("Permission Denied: You cannot edit products.");
-      return;
+
+  // --- Search & Filter Logic ---
+  const filteredProducts = products.filter(p => {
+    const matchesCategory = activeCategory === "All" || p.category?.toLowerCase() === activeCategory.toLowerCase();
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // --- Bulk Category Update (NEW) ---
+  const handleBulkStatusUpdate = async (newStatus: boolean) => {
+    if (activeCategory === "All") return alert("Please select a specific category first to bulk update.");
+    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) return alert("Permission Denied.");
+    
+    if (confirm(`Are you sure you want to mark ALL items in "${activeCategory}" as ${newStatus ? 'Active' : 'Inactive'}?`)) {
+      setLoading(true);
+      try {
+        const batch = writeBatch(db);
+        const productsToUpdate = products.filter(p => p.category?.toLowerCase() === activeCategory.toLowerCase());
+        
+        productsToUpdate.forEach(p => {
+          const pRef = doc(db, "products", p.id);
+          batch.update(pRef, { isActive: newStatus });
+        });
+
+        await batch.commit(); // Execute all updates instantly
+        
+        // Update local state
+        setProducts(prev => prev.map(p => 
+          p.category?.toLowerCase() === activeCategory.toLowerCase() ? { ...p, isActive: newStatus } : p
+        ));
+        alert(`Bulk update complete!`);
+      } catch (error) {
+        console.error("Bulk update failed:", error);
+        alert("Bulk update failed.");
+      } finally {
+        setLoading(false);
+      }
     }
+  };
+
+  // --- Toggle Handlers ---
+  const handleToggleActive = async (product: Product) => {
+    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) return alert("Permission Denied.");
+    try {
+      const newStatus = !product.isActive;
+      await updateDoc(doc(db, "products", product.id), { isActive: newStatus });
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, isActive: newStatus } : p));
+    } catch (error) {
+      console.error("Error toggling status:", error);
+    }
+  };
+
+  const handleToggleFeatured = async (product: Product) => {
+    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) return alert("Permission Denied.");
+    try {
+      const newFeatured = !product.isFeatured;
+      await updateDoc(doc(db, "products", product.id), { isFeatured: newFeatured });
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, isFeatured: newFeatured } : p));
+    } catch (error) {
+      console.error("Error toggling featured:", error);
+    }
+  };
+
+  // --- Edit & Delete Handlers ---
+  const handleEditClick = (product: Product) => {
+    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) return alert("Permission Denied.");
     setEditingProduct(product);
     setEditName(product.name);
     setEditPrice(String(product.price));
     setEditStock(String(product.stockQuantity));
     setEditCategory(product.category || "Home Decor");
     setEditDescription(product.description || generateAIPlaceholderDescription(product.name));
-    
-    // Reset category adder state
     setShowNewCategoryInput(false);
-    setNewCategoryName("");
-    
     setIsEditModalOpen(true);
-  };
-
-  // --- NEW: Handle Inline Custom Category Creation ---
-  const handleAddNewCategory = async () => {
-    if (!newCategoryName.trim()) return alert("Please enter a valid category name!");
-    setAddingCategory(true);
-    try {
-      // 1. Save new category to Firestore
-      const newCatRef = await addDoc(collection(db, "categories"), {
-        name: newCategoryName.trim(),
-        createdAt: new Date()
-      });
-
-      const newlyAddedCategory = { id: newCatRef.id, name: newCategoryName.trim() };
-      
-      // 2. Update local state
-      setCategories(prev => [...prev, newlyAddedCategory]);
-      setEditCategory(newCategoryName.trim()); // Set as selected category in form
-      setShowNewCategoryInput(false); // Close input
-      setNewCategoryName("");
-      alert("New category added successfully!");
-    } catch (error) {
-      console.error("Error creating category:", error);
-      alert("Failed to create category.");
-    } finally {
-      setAddingCategory(false);
-    }
   };
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
     setLoading(true);
-
     try {
       await updateDoc(doc(db, "products", editingProduct.id), {
         name: editName,
@@ -156,46 +166,25 @@ export default function ManageProductsPage() {
         category: editCategory,
         description: editDescription,
       });
-
       alert("Product updated successfully!");
       setIsEditModalOpen(false);
       setEditingProduct(null);
-      fetchData(); // Refresh list & categories
+      fetchData(); 
     } catch (error) {
-      console.error("Error updating product: ", error);
       alert("Failed to update product.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleActive = async (product: Product) => {
-    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) {
-      alert("Permission Denied: You cannot change product status.");
-      return;
-    }
-    try {
-      const newStatus = !product.isActive;
-      await updateDoc(doc(db, "products", product.id), { isActive: newStatus });
-      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, isActive: newStatus } : p));
-    } catch (error) {
-      console.error("Error toggling product status:", error);
-    }
-  };
-
   const handleDeleteProduct = async (productId: string, productName: string) => {
-    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) {
-      alert("Permission Denied: You cannot delete products.");
-      return;
-    }
-    if (confirm(`Are you sure you want to delete "${productName}"? This cannot be undone.`)) {
+    if (roleCode !== 0 && (roleCode !== 1 || !hasPermission("manage products"))) return alert("Permission Denied.");
+    if (confirm(`Are you sure you want to delete "${productName}"?`)) {
       setLoading(true);
       try {
         await deleteDoc(doc(db, "products", productId));
         setProducts(prev => prev.filter(p => p.id !== productId));
-        alert("Product deleted successfully!");
       } catch (error) {
-        console.error("Error deleting product:", error);
         alert("Failed to delete product.");
       } finally {
         setLoading(false);
@@ -204,181 +193,174 @@ export default function ManageProductsPage() {
   };
 
   if (roleCode !== 0 && !hasPermission("manage products")) {
-    return (
-      <div className="p-8 max-w-7xl mx-auto mt-10 text-center text-red-600 font-bold text-2xl">
-        Access Denied: You do not have permission to manage products.
-      </div>
-    );
+    return <div className="p-8 text-center text-red-600 font-bold text-2xl">Access Denied</div>;
   }
 
-  if (loading && !isEditModalOpen) return <div className="min-h-screen flex items-center justify-center text-xl font-bold">Loading Products...</div>;
-
   return (
-    <div className="max-w-7xl mx-auto p-8 mt-10">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-900">Product Management</h1>
+    <div className="max-w-[1400px] mx-auto p-8 mt-4 text-slate-800">
+      
+      {/* Header with Modern Pill Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Inventory</h1>
         <button 
           onClick={() => router.push("/products/add")}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
+          className="bg-slate-900 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-slate-800 flex items-center gap-2 shadow-md transition active:scale-95"
         >
-          <PlusCircle size={20} /> Add New Product
+          <Plus size={18} /> Add Product
         </button>
       </div>
 
-      {products.length === 0 ? (
-        <div className="bg-white p-8 rounded-xl shadow border text-center text-slate-500">
-          No products found.
+      {/* --- Filter & Search Toolbar --- */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        
+        {/* Categories Pill Filters */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Filter:</span>
+          {["All", ...categories.map(c => c.name)].map(category => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                activeCategory === category ? "bg-[#C9A84C] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
         </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
-              <thead>
-                <tr className="bg-slate-50 text-sm border-b text-slate-600">
-                  <th className="p-4 font-semibold">Image</th>
-                  <th className="p-4 font-semibold">Product Name</th>
-                  <th className="p-4 font-semibold">Category</th>
-                  <th className="p-4 font-semibold">Price (LKR)</th>
-                  <th className="p-4 font-semibold">Stock</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-slate-50 transition">
-                    <td className="p-4">
-                      <img src={product.images[0]} alt={product.name} className="w-16 h-16 object-cover rounded-md border" />
+
+        {/* Search & Bulk Actions */}
+        <div className="flex w-full md:w-auto items-center gap-4">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm outline-none focus:border-slate-400 focus:bg-white transition"
+            />
+          </div>
+
+          {/* Bulk Update Buttons (Only show if a specific category is selected) */}
+          {activeCategory !== "All" && (
+            <div className="flex gap-2">
+              <button onClick={() => handleBulkStatusUpdate(true)} className="text-xs font-bold px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition whitespace-nowrap">
+                Activate All
+              </button>
+              <button onClick={() => handleBulkStatusUpdate(false)} className="text-xs font-bold px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition whitespace-nowrap">
+                Deactivate All
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* --- Cleaner Table Design --- */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-5">Image</th>
+                <th className="p-5">Product Details</th>
+                <th className="p-5">Price (LKR)</th>
+                <th className="p-5">Stock</th>
+                <th className="p-5 text-center">Featured</th>
+                <th className="p-5 text-center">Status</th>
+                <th className="p-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {filteredProducts.length === 0 ? (
+                <tr><td colSpan={7} className="p-10 text-center text-slate-400">No products found.</td></tr>
+              ) : (
+                filteredProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-slate-50/50 transition">
+                    <td className="p-4 pl-5">
+                      <img src={product.images[0]} alt={product.name} className="w-12 h-12 object-cover rounded-lg border border-slate-200" />
                     </td>
-                    <td className="p-4 font-bold text-slate-900">{product.name}</td>
-                    <td className="p-4 text-slate-600 font-medium capitalize">{product.category || "Unassigned"}</td>
-                    <td className="p-4 font-bold text-slate-900">LKR {product.price.toLocaleString()}</td>
                     <td className="p-4">
-                      <span className={`${product.stockQuantity <= 5 ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                      <p className="font-bold text-slate-900">{product.name}</p>
+                      <p className="text-xs text-slate-400 uppercase tracking-wide mt-0.5">{product.category || "Unassigned"}</p>
+                    </td>
+                    <td className="p-4 font-bold text-slate-900">{product.price.toLocaleString()}</td>
+                    <td className="p-4">
+                      <span className={`${product.stockQuantity <= 5 ? 'text-red-600 font-bold' : 'text-slate-700 font-medium'}`}>
                         {product.stockQuantity}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <button 
-                        onClick={() => handleToggleActive(product)} 
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-colors flex items-center gap-1 ${
-                          product.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'
-                        }`}
-                      >
-                        {product.isActive ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                        {product.isActive ? 'Active' : 'Inactive'}
+                    
+                    {/* Featured Toggle Column */}
+                    <td className="p-4 text-center">
+                      <button onClick={() => handleToggleFeatured(product)} className="focus:outline-none transition-transform active:scale-90 hover:opacity-80">
+                        <Star size={22} className={product.isFeatured ? "fill-[#C9A84C] text-[#C9A84C]" : "text-slate-300"} />
                       </button>
                     </td>
-                    <td className="p-4 flex gap-4 text-slate-400">
-                      <button onClick={() => handleEditClick(product)} className="hover:text-blue-600"><Edit size={18} /></button>
-                      {(roleCode === 0 || (roleCode === 1 && hasPermission("manage products"))) && (
-                          <button onClick={() => handleDeleteProduct(product.id, product.name)} className="hover:text-red-600"><Trash2 size={18} /></button>
-                      )}
+
+                    {/* Status Toggle Column */}
+                    <td className="p-4 text-center">
+                      <button onClick={() => handleToggleActive(product)} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition ${
+                          product.isActive ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {product.isActive ? 'Active' : 'Hidden'}
+                      </button>
+                    </td>
+                    
+                    <td className="p-4 pr-5 flex justify-end gap-3 text-slate-400">
+                      <button onClick={() => handleEditClick(product)} className="hover:text-blue-600 p-2 bg-slate-50 rounded-lg hover:bg-blue-50 transition"><Edit size={16} /></button>
+                      <button onClick={() => handleDeleteProduct(product.id, product.name)} className="hover:text-red-600 p-2 bg-slate-50 rounded-lg hover:bg-red-50 transition"><Trash2 size={16} /></button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      {/* --- EDIT PRODUCT DETAILS MODAL --- */}
+      {/* --- EDIT PRODUCT MODAL --- */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800">✕</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setIsEditModalOpen(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-800 bg-slate-100 p-2 rounded-full transition"><X size={18} /></button>
             <h2 className="text-2xl font-bold mb-6">Edit Product Details</h2>
-            
-            <form onSubmit={handleUpdateProduct} className="space-y-4 text-slate-800">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleUpdateProduct} className="space-y-4">
+               {/* Same form inputs as before... */}
+               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1">Product Name</label>
-                  <input required value={editName} onChange={e => setEditName(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input required value={editName} onChange={e => setEditName(e.target.value)} className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#C9A84C]" />
                 </div>
-                
-                {/* DYNAMIC CATEGORY DROPDOWN WITH INLINE ADD */}
                 <div>
                   <label className="block text-sm font-semibold mb-1">Category</label>
-                  <select 
-                    value={editCategory} 
-                    onChange={e => {
-                      if (e.target.value === "ADD_NEW") {
-                        setShowNewCategoryInput(true);
-                        setEditCategory("");
-                      } else {
-                        setEditCategory(e.target.value);
-                        setShowNewCategoryInput(false);
-                      }
-                    }} 
-                    className="w-full border rounded-lg p-2.5 outline-none bg-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                    <option value="ADD_NEW" className="text-blue-600 font-bold">+ Add New Category...</option>
+                  <select value={editCategory} onChange={e => setEditCategory(e.target.value)} className="w-full border rounded-xl p-3 outline-none bg-white focus:ring-2 focus:ring-[#C9A84C]">
+                    {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                   </select>
                 </div>
               </div>
-
-              {/* INLINE NEW CATEGORY INPUT BOX */}
-              {showNewCategoryInput && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex gap-2 items-center animate-in fade-in duration-200">
-                  <input 
-                    type="text" 
-                    placeholder="Enter custom category..." 
-                    value={newCategoryName}
-                    onChange={e => setNewCategoryName(e.target.value)}
-                    className="flex-1 border border-slate-200 rounded-lg p-2 text-sm outline-none bg-white focus:border-blue-500"
-                  />
-                  <button 
-                    type="button" 
-                    disabled={addingCategory}
-                    onClick={handleAddNewCategory}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {addingCategory ? "Adding..." : "Add"}
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => { setShowNewCategoryInput(false); setEditCategory(categories[0]?.name || "Home Decor"); }}
-                    className="bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-300"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1">Price (LKR)</label>
-                  <input type="number" required value={editPrice} onChange={e => setEditPrice(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="number" required value={editPrice} onChange={e => setEditPrice(e.target.value)} className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#C9A84C]" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Stock Quantity</label>
-                  <input type="number" required value={editStock} onChange={e => setEditStock(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="number" required value={editStock} onChange={e => setEditStock(e.target.value)} className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#C9A84C]" />
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-semibold mb-1">Product Description (SEO Sheet)</label>
-                <textarea 
-                  rows={6}
-                  value={editDescription} 
-                  onChange={e => setEditDescription(e.target.value)} 
-                  className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm leading-relaxed"
-                  placeholder="Paste or write detailed specifications here..."
-                />
+                <label className="block text-sm font-semibold mb-1 text-slate-700">SEO Product Description</label>
+                <textarea rows={5} value={editDescription} onChange={e => setEditDescription(e.target.value)} className="w-full border rounded-xl p-4 outline-none focus:ring-2 focus:ring-[#C9A84C] text-sm text-slate-600 leading-relaxed bg-slate-50" />
               </div>
-
-              <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+              <button type="submit" disabled={loading} className="w-full bg-[#1C1C1E] text-white font-bold py-4 rounded-xl hover:bg-[#333] transition mt-4">
                 {loading ? "Saving Changes..." : "Save Product Details"}
               </button>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }

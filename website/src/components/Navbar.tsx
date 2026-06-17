@@ -13,7 +13,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const cartItems = useCartStore((state) => state.cart);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  
   const { user, setAuthModalOpen } = useAuthStore();
 
   const handleCartClick = () => {
@@ -37,64 +36,90 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white border-b fixed top-0 left-0 w-full z-50 shadow-sm">
+    <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 fixed top-0 left-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
-        {/* Left: Logo */}
-        <button onClick={() => router.push("/")} className="flex items-center gap-2">
-          <Image src="/logo.jpg" alt="Accessories by DN Logo" width={40} height={40} className="rounded-full" />
-          <span className="font-extrabold text-lg tracking-tight text-slate-900 hidden md:block">
+
+        {/* Logo */}
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2.5 shrink-0"
+        >
+          <Image
+            src="/logo.jpg"
+            alt="Accessories by DN Logo"
+            width={34}
+            height={34}
+            className="rounded-full"
+          />
+          <span className="font-medium text-[15px] tracking-tight text-slate-900 hidden md:block">
             Accessories by DN
           </span>
         </button>
 
-        {/* Middle: Navigation Links (NEW) */}
-        <div className="flex items-center gap-6 md:gap-8">
+        {/* Nav links */}
+        <div className="flex items-center gap-7">
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
             return (
-              <Link 
-                key={link.name} 
+              <Link
+                key={link.name}
                 href={link.path}
-                className={`text-sm font-semibold tracking-wider uppercase transition-colors duration-200 ${
-                  isActive ? "text-[#C9A84C]" : "text-slate-600 hover:text-slate-900"
+                className={`text-[13px] tracking-wide transition-colors duration-150 ${
+                  isActive
+                    ? "text-slate-900 font-medium"
+                    : "text-slate-500 hover:text-slate-800 font-normal"
                 }`}
               >
                 {link.name}
+                {isActive && (
+                  <span className="block h-px bg-slate-900 mt-0.5 rounded-full" />
+                )}
               </Link>
             );
           })}
         </div>
-        
-        {/* Right: User Auth & Cart */}
-        <div className="flex items-center gap-4">
+
+        {/* Right: auth + cart */}
+        <div className="flex items-center gap-3 shrink-0">
           {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-slate-600 hidden lg:block">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] text-slate-400 hidden lg:block truncate max-w-[140px]">
                 {user.email}
               </span>
-              <button 
-                onClick={handleLogout} 
-                className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition"
+              <button
+                onClick={handleLogout}
+                className="text-[12px] font-medium text-slate-500 hover:text-slate-900 border border-slate-200 hover:border-slate-400 px-3 py-1.5 rounded-full transition"
               >
-                Logout
+                Log out
               </button>
             </div>
           ) : (
-            <button 
+            <button
               onClick={() => setAuthModalOpen(true)}
-              className="text-sm font-bold text-slate-600 hover:text-slate-900 transition"
+              className="text-[13px] font-medium text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-400 px-3.5 py-1.5 rounded-full transition"
             >
-              Log In
+              Log in
             </button>
           )}
 
-          <button onClick={handleCartClick} className="relative p-2 text-slate-600 hover:text-slate-900 transition">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          {/* Cart */}
+          <button
+            onClick={handleCartClick}
+            aria-label="Open cart"
+            className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
             {totalItems > 0 && (
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+              <span className="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center text-[10px] font-medium text-white bg-slate-900 rounded-full">
                 {totalItems}
               </span>
             )}
