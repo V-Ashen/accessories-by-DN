@@ -4,9 +4,9 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 
 const banners = [
-  "/banners/banner1.jpg",
-  "/banners/banner2.jpg",
-  "/banners/banner3.jpg",
+  "/banners/banner1.png",
+  "/banners/banner2.png",
+  "/banners/banner3.png",
   // Add more banner image paths here
 ];
 
