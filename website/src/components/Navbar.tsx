@@ -48,7 +48,7 @@ export default function Navbar() {
         {/* Logo */}
         <button onClick={() => router.push("/")} className="flex items-center gap-2.5 z-50 shrink-0">
           <Image src="/logo.jpg" alt="Accessories by DN Logo" width={34} height={34} className="rounded-full" />
-          <span className="font-medium text-[15px] tracking-tight text-slate-900 hidden sm:block">
+          <span className="font-medium text-[15px] tracking-tight text-slate-900">
             Accessories by DN
           </span>
         </button>

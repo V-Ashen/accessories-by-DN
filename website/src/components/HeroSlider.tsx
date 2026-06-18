@@ -32,7 +32,7 @@ export default function HeroSlider() {
   const goNext = () => goTo((currentBanner + 1) % banners.length);
 
   return (
-    <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] bg-[#1C1C1E] overflow-hidden group">
+     <div className="relative w-full h-[220px] sm:h-[300px] md:h-[550px] bg-slate-100 overflow-hidden">
 
       {/* Slides */}
       {banners.map((banner, index) => (
