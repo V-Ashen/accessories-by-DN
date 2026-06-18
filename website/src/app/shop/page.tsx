@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ProductCard from "@/components/ProductCard";
-import { ChevronLeft, ChevronRight } from "lucide-react"; // Icons for pagination
+import { ChevronLeft, ChevronRight, PackageSearch } from "lucide-react"; 
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
-const ITEMS_PER_PAGE = 8; // Change this to how many items you want per page!
+const ITEMS_PER_PAGE = 8; 
 
 interface Product {
   id: string;
@@ -18,7 +20,6 @@ interface Product {
   category: string;
 }
 
-// Fallback for older items missing a category in the database
 const getFallbackCategory = (name: string): string => {
   const lowercaseName = name.toLowerCase();
   if (lowercaseName.includes("jar") || lowercaseName.includes("rack") || lowercaseName.includes("kitchen") || lowercaseName.includes("bottle") || lowercaseName.includes("box") || lowercaseName.includes("tumbler")) return "Kitchenware";
@@ -29,25 +30,23 @@ const getFallbackCategory = (name: string): string => {
 };
 
 export default function ShopPage() {
+  const { user, setAuthModalOpen } = useAuthStore();
+  const router = useRouter();
+
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [loading, setLoading] = useState(true);
   
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-
-  // Traditional Pagination States (NEW)
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 1. Initial Fetch (Gets everything active, maps categories)
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
 
-        // Fetch DB Categories
         const categoriesSnapshot = await getDocs(collection(db, "categories"));
         let dbCats: string[] = [];
         if (!categoriesSnapshot.empty) {
@@ -57,7 +56,6 @@ export default function ShopPage() {
           });
         }
 
-        // Fetch Active Products
         const q = query(
           collection(db, "products"),
           where("stockQuantity", ">", 0),
@@ -71,7 +69,6 @@ export default function ShopPage() {
           const rawCategory = data.category || getFallbackCategory(data.name);
           const cleanCategory = rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1).toLowerCase();
           
-          // Ensure fallback categories also exist in the filter buttons
           if (!dbCats.includes(cleanCategory)) {
             dbCats.push(cleanCategory);
           }
@@ -90,7 +87,6 @@ export default function ShopPage() {
         setAllProducts(fetched);
         setFilteredProducts(fetched);
 
-        // Clean up duplicates in categories list
         const uniqueCats = Array.from(new Set(dbCats));
         setCategories(["All", ...uniqueCats]);
 
@@ -104,7 +100,6 @@ export default function ShopPage() {
     fetchAllData();
   }, []);
 
-  // 2. Client-Side Filtering (Fixes the filter bug!)
   useEffect(() => {
     let result = allProducts;
 
@@ -117,18 +112,24 @@ export default function ShopPage() {
     }
 
     setFilteredProducts(result);
-    setCurrentPage(1); // Reset to page 1 whenever filters change!
+    setCurrentPage(1); 
   }, [searchQuery, activeCategory, allProducts]);
 
 
-  // 3. Pagination Math (NEW)
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentDisplayedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Pagination Handlers
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+  const handleTrackOrderClick = () => {
+    if (!user) {
+      setAuthModalOpen(true); 
+    } else {
+      router.push("/track-order"); 
+    }
+  };
 
   if (loading) return <p className="text-center text-slate-500 py-20">Loading Shop...</p>;
 
@@ -136,9 +137,17 @@ export default function ShopPage() {
     <div className="min-h-screen bg-[#FAF9F7] py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        <h1 className="text-3xl font-extrabold text-[#1C1C1E] mb-8 tracking-tight">Our Collections</h1>
+        <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+          <h1 className="text-3xl font-extrabold text-[#1C1C1E] tracking-tight">Our Collections</h1>
+          
+          <button 
+            onClick={handleTrackOrderClick}
+            className="flex items-center gap-2 bg-[#C9A84C] text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#b0903a] shadow-md transition-all active:scale-95"
+          >
+            <PackageSearch size={16} /> Track My Orders
+          </button>
+        </div>
 
-        {/* Search and Filter Section */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-10">
           <input 
             type="text" 
@@ -165,24 +174,20 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* Product Grid */}
         {filteredProducts.length === 0 ? (
           <div className="text-center py-20 bg-white border border-[#E0DDD6] rounded-2xl">
             <p className="text-slate-500 font-medium">No products match your search or filter.</p>
           </div>
         ) : (
-          <>
+          <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {currentDisplayedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
 
-            {/* --- TRADITIONAL PAGINATION CONTROLS --- */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-16">
-                
-                {/* Previous Button */}
                 <button
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
@@ -191,12 +196,10 @@ export default function ShopPage() {
                   <ChevronLeft size={20} />
                 </button>
 
-                {/* Page Indicator */}
                 <span className="text-sm font-semibold text-slate-600 tracking-widest uppercase">
                   Page {currentPage} of {totalPages}
                 </span>
 
-                {/* Next Button */}
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
@@ -204,10 +207,9 @@ export default function ShopPage() {
                 >
                   <ChevronRight size={20} />
                 </button>
-
               </div>
             )}
-          </>
+          </div>
         )}
 
       </div>

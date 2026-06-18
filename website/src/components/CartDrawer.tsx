@@ -12,12 +12,8 @@ export default function CartDrawer() {
   if (!isCartOpen) return null;
 
   const handleCheckoutClick = () => {
-    setCartOpen(false);
-    if (!user) {
-      setAuthModalOpen(true);
-    } else {
-      router.push("/checkout");
-    }
+       setCartOpen(false); 
+    router.push("/checkout");
   };
 
   return (
