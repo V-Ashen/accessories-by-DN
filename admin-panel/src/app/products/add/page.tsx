@@ -37,7 +37,13 @@ export default function AddProductPage() {
   const fetchCategories = async () => {
     try {
       const catSnapshot = await getDocs(collection(db, "categories"));
-      let fetchedCats = catSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // FIX: Explicitly tell TypeScript that 'name' is a string
+      let fetchedCats = catSnapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        name: doc.data().name as string, 
+        ...doc.data() 
+      }));
 
       if (catSnapshot.empty) {
         // Auto-seed defaults if collection is empty
@@ -47,12 +53,16 @@ export default function AddProductPage() {
         await Promise.all(seedPromises);
         
         const freshCatSnapshot = await getDocs(collection(db, "categories"));
-        fetchedCats = freshCatSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        fetchedCats = freshCatSnapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          name: doc.data().name as string, 
+          ...doc.data() 
+        }));
       }
 
       setCategories(fetchedCats);
       if (fetchedCats.length > 0) {
-        setCategory(fetchedCats[0].name); // Default select first category
+        setCategory(fetchedCats[0].name); // Now TypeScript knows 'name' exists!
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
