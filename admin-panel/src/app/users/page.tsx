@@ -47,14 +47,14 @@ const StatCard = ({
   sub: string;
   icon: React.ElementType;
 }) => (
-  <div className="bg-white border border-slate-200/80 rounded-xl p-4">
+  <div className="bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-4 hover:shadow-md transition duration-300">
     <div className="flex items-center justify-between mb-3">
-      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{label}</p>
-      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-        <Icon size={15} className="text-slate-500" />
+      <p className="text-xs text-[#C9A84C] font-medium uppercase tracking-wide">{label}</p>
+      <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-[#E0DDD6] flex items-center justify-center">
+        <Icon size={15} className="text-[#1C1C1E]" />
       </div>
     </div>
-    <p className="text-2xl font-semibold text-slate-900">{value}</p>
+    <p className="text-2xl font-semibold text-[#1C1C1E]">{value}</p>
     <p className="text-xs text-slate-400 mt-1">{sub}</p>
   </div>
 );
@@ -63,15 +63,15 @@ const CustomerTable = ({ data }: { data: CustomerProfile[] }) => (
   <div className="overflow-x-auto">
     <table className="w-full">
       <thead>
-        <tr className="border-b border-slate-100">
-          <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Customer</th>
-          <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-          <th className="text-center px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Orders</th>
-          <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Lifetime spent</th>
-          <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">History</th>
+        <tr className="border-b border-[#E0DDD6] bg-[#FAF9F7]">
+          <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+          <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+          <th className="text-center px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Orders</th>
+          <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Lifetime spent</th>
+          <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">History</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody className="divide-y divide-[#E0DDD6]">
         {data.length === 0 ? (
           <tr>
             <td colSpan={5} className="text-center py-12 text-sm text-slate-400">
@@ -80,21 +80,21 @@ const CustomerTable = ({ data }: { data: CustomerProfile[] }) => (
           </tr>
         ) : (
           data.map((c, idx) => (
-            <tr key={idx} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 transition-colors">
+            <tr key={idx} className="hover:bg-[#FAF9F7] transition-colors">
               {/* Customer */}
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 ${
                       c.isRegistered
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "bg-slate-100 text-slate-500"
+                        ? "bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20"
+                        : "bg-slate-100 text-slate-500 border border-slate-200"
                     }`}
                   >
                     {c.isRegistered ? getInitials(c.name) : "?"}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{c.name}</p>
+                    <p className="text-sm font-medium text-[#1C1C1E]">{c.name}</p>
                     <p className="text-xs text-slate-400">{c.email}</p>
                   </div>
                 </div>
@@ -103,7 +103,7 @@ const CustomerTable = ({ data }: { data: CustomerProfile[] }) => (
               {/* Status */}
               <td className="px-5 py-3.5">
                 {c.isRegistered ? (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20">
                     <UserCheck size={11} />
                     Registered
                   </span>
@@ -121,7 +121,7 @@ const CustomerTable = ({ data }: { data: CustomerProfile[] }) => (
               </td>
 
               {/* Lifetime spent */}
-              <td className="px-5 py-3.5 text-right text-sm font-semibold text-slate-900 tabular-nums">
+              <td className="px-5 py-3.5 text-right text-sm font-semibold text-[#1C1C1E] tabular-nums">
                 LKR {c.totalSpent.toLocaleString()}
               </td>
 
@@ -131,7 +131,7 @@ const CustomerTable = ({ data }: { data: CustomerProfile[] }) => (
                   <DialogTrigger asChild>
                     <button
                       disabled={c.orders.length === 0}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-[#E0DDD6] text-slate-600 hover:bg-[#1C1C1E] hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <History size={13} />
                       View
@@ -308,10 +308,10 @@ export default function UsersPage() {
       </div>
 
       {/* Main card */}
-      <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#E0DDD6] rounded-xl overflow-hidden shadow-sm">
         {/* Card header */}
-        <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-slate-100 flex-wrap">
-          <p className="text-sm font-medium text-slate-800">Customer database</p>
+        <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-[#E0DDD6] flex-wrap">
+          <p className="text-sm font-bold text-[#1C1C1E] uppercase tracking-wider">Customer database</p>
           <div className="relative">
             <Search
               size={14}
@@ -322,13 +322,13 @@ export default function UsersPage() {
               placeholder="Search name or email…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 w-56 transition"
+              className="pl-8 pr-3 py-2 text-sm border border-[#E0DDD6] rounded-lg bg-[#FAF9F7] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/50 focus:border-[#C9A84C] w-56 transition"
             />
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-0 px-5 border-b border-slate-100">
+        <div className="flex gap-0 px-5 border-b border-[#E0DDD6]">
           {(
             [
               { key: "all", label: `All buyers`, count: filtered.length },
@@ -339,17 +339,17 @@ export default function UsersPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-3 text-xs font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  ? "border-[#C9A84C] text-[#C9A84C]"
+                  : "border-transparent text-slate-500 hover:text-[#1C1C1E]"
               }`}
             >
               {tab.label}
               <span
                 className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
                   activeTab === tab.key
-                    ? "bg-indigo-100 text-indigo-700"
+                    ? "bg-[#C9A84C]/10 text-[#C9A84C]"
                     : "bg-slate-100 text-slate-500"
                 }`}
               >

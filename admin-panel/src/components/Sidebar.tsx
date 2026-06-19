@@ -60,25 +60,25 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="w-72 bg-[#0B1121] text-slate-400 h-full flex flex-col border-r border-slate-800/50 font-sans">
+    <div className="w-72 bg-[#121214] text-slate-400 h-full flex flex-col border-r border-[#2A2A2E] font-sans">
       
       {/* Brand Header */}
       <div className="p-6 pb-4">
         <div className="flex items-center gap-3 text-white mb-6">
-          <div className="bg-[#5A52FF] p-1.5 rounded-lg">
+          <div className="bg-[#C9A84C] p-1.5 rounded-lg">
             <Hexagon size={20} className="fill-white/20" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">AdminPanel</h1>
+          <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>AdminPanel</h1>
         </div>
 
         {/* User Profile Card */}
-        <div className="bg-[#131B2C] border border-slate-800 rounded-xl p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#5A52FF] flex items-center justify-center text-white font-bold shadow-inner">
+        <div className="bg-[#1A1A1E] border border-[#2A2A2E] rounded-xl p-3 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#C9A84C] flex items-center justify-center text-white font-bold shadow-inner">
             {user?.email?.substring(0, 2).toUpperCase() || "AD"}
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-bold text-slate-200 truncate">{user?.email}</p>
-            <p className="text-xs text-slate-500">{getRoleName(roleCode)}</p>
+            <p className="text-xs text-[#C9A84C]">{getRoleName(roleCode)}</p>
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function Sidebar() {
         
         {/* MAIN SECTION */}
         <div>
-          <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-slate-600 mb-3">MAIN</p>
+          <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-[#C9A84C] mb-3">MAIN</p>
           <div className="space-y-1">
             {mainLinks.map((item) => {
               if (roleCode === 0 || hasPermission(item.permission)) {
@@ -95,7 +95,7 @@ export default function Sidebar() {
                 return (
                   <Link key={item.name} href={item.path}>
                     <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
-                      isActive ? "bg-[#5A52FF] text-white shadow-md shadow-[#5A52FF]/20" : "hover:bg-slate-800/50 hover:text-slate-200"
+                      isActive ? "bg-[#C9A84C] text-white shadow-md shadow-[#C9A84C]/20" : "hover:bg-[#1A1A1E] hover:text-slate-200"
                     }`}>
                       <div className="flex items-center gap-3">
                         <item.icon size={18} className={isActive ? "text-white" : "text-slate-500"} />
@@ -105,7 +105,7 @@ export default function Sidebar() {
                         <span className="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded">New</span>
                       )}
                       {item.badge && item.badge > 0 ? (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isActive ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isActive ? "bg-white/20 text-white" : "bg-[#1A1A1E] text-[#C9A84C]"}`}>
                           {item.badge}
                         </span>
                       ) : null}
@@ -120,7 +120,7 @@ export default function Sidebar() {
 
         {/* MANAGEMENT SECTION */}
         <div>
-          <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-slate-600 mb-3">MANAGEMENT</p>
+          <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-[#C9A84C] mb-3">MANAGEMENT</p>
           <div className="space-y-1">
             {managementLinks.map((item) => {
               if (roleCode === 0 || hasPermission(item.permission)) {
@@ -128,7 +128,7 @@ export default function Sidebar() {
                 return (
                   <Link key={item.name} href={item.path}>
                     <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
-                      isActive ? "bg-[#5A52FF] text-white shadow-md shadow-[#5A52FF]/20" : "hover:bg-slate-800/50 hover:text-slate-200"
+                      isActive ? "bg-[#C9A84C] text-white shadow-md shadow-[#C9A84C]/20" : "hover:bg-[#1A1A1E] hover:text-slate-200"
                     }`}>
                       <item.icon size={18} className={isActive ? "text-white" : "text-slate-500"} />
                       <span className="font-semibold text-sm">{item.name}</span>
@@ -143,10 +143,10 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-slate-800/50">
+      <div className="p-4 border-t border-[#2A2A2E]">
         <button 
           onClick={() => signOut(auth)}
-          className="flex items-center gap-3 px-3 py-3 w-full text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+          className="flex items-center gap-3 px-3 py-3 w-full text-red-400 hover:bg-red-400/10 rounded-xl transition-colors"
         >
           <LogOut size={18} />
           <span className="font-bold text-sm">Logout</span>

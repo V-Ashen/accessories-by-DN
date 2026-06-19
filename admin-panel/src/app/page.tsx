@@ -162,7 +162,7 @@ export default function AdminDashboard() {
   if (!mounted) return null; // Prevents render issues prior to client mounting
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-xl text-slate-700 bg-slate-50">Loading Dashboard Analytics...</div>;
 
-  const COLORS = ["#3B82F6", "#10B981", "#8B5CF6", "#F59E0B", "#EF4444"];
+  const COLORS = ["#C9A84C", "#1C1C1E", "#D4B65F", "#2A2A2E", "#A08639"];
 
   return (
     <div className="max-w-7xl mx-auto p-8 text-slate-800">
@@ -170,14 +170,14 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Overview</h1>
+          <h1 className="text-3xl font-extrabold text-[#1C1C1E] tracking-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Dashboard Overview</h1>
           <p className="text-slate-500 text-sm mt-1">Operational KPIs and Sales Volume Analysis</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => router.push("/orders")} className="bg-white border text-sm shadow-sm px-4 py-2.5 rounded-xl font-semibold hover:bg-slate-50 transition active:scale-95">
+          <button onClick={() => router.push("/orders")} className="bg-white border border-[#E0DDD6] text-sm shadow-sm px-4 py-2.5 rounded-xl font-semibold hover:bg-[#FAF9F7] transition active:scale-95 text-[#1C1C1E]">
             Process Orders
           </button>
-          <button onClick={() => router.push("/products/add")} className="bg-blue-600 text-white text-sm px-4 py-2.5 rounded-xl font-semibold hover:bg-blue-700 shadow transition active:scale-95">
+          <button onClick={() => router.push("/products/add")} className="bg-[#1C1C1E] text-[#C9A84C] text-sm px-4 py-2.5 rounded-xl font-semibold hover:bg-[#2A2A2E] shadow transition active:scale-95">
             + Add Product
           </button>
         </div>
@@ -186,37 +186,37 @@ export default function AdminDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Revenue Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E0DDD6] flex items-center justify-between hover:shadow-md transition duration-300">
           <div>
             <p className="text-[10px] font-bold tracking-wider uppercase text-slate-400 mb-1">Total Revenue</p>
-            <h3 className="text-2xl font-bold text-slate-900">LKR {stats.totalRevenue.toLocaleString()}</h3>
+            <h3 className="text-2xl font-bold text-[#1C1C1E]">LKR {stats.totalRevenue.toLocaleString()}</h3>
           </div>
-          <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600"><Coins size={22} /></div>
+          <div className="w-12 h-12 bg-[#C9A84C]/10 rounded-full flex items-center justify-center text-[#C9A84C]"><Coins size={22} /></div>
         </div>
 
         {/* Total Orders Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E0DDD6] flex items-center justify-between hover:shadow-md transition duration-300">
           <div>
             <p className="text-[10px] font-bold tracking-wider uppercase text-slate-400 mb-1">Total Orders</p>
-            <h3 className="text-2xl font-bold text-slate-900">{stats.totalOrders}</h3>
+            <h3 className="text-2xl font-bold text-[#1C1C1E]">{stats.totalOrders}</h3>
           </div>
-          <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600"><ShoppingBag size={22} /></div>
+          <div className="w-12 h-12 bg-[#1C1C1E] rounded-full flex items-center justify-center text-white"><ShoppingBag size={22} /></div>
         </div>
 
         {/* Pending Orders Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E0DDD6] flex items-center justify-between hover:shadow-md transition duration-300">
           <div>
             <p className="text-[10px] font-bold tracking-wider uppercase text-slate-400 mb-1">Pending Orders</p>
-            <h3 className="text-2xl font-bold text-slate-900">{stats.pendingOrdersCount}</h3>
+            <h3 className="text-2xl font-bold text-[#1C1C1E]">{stats.pendingOrdersCount}</h3>
           </div>
-          <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center text-yellow-600"><ClipboardList size={22} /></div>
+          <div className="w-12 h-12 bg-[#C9A84C]/10 rounded-full flex items-center justify-center text-[#C9A84C]"><ClipboardList size={22} /></div>
         </div>
 
         {/* Low Stock Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E0DDD6] flex items-center justify-between hover:shadow-md transition duration-300">
           <div>
             <p className="text-[10px] font-bold tracking-wider uppercase text-slate-400 mb-1">Low Stock Alerts</p>
-            <h3 className="text-2xl font-bold text-slate-900">{stats.lowStockItems}</h3>
+            <h3 className="text-2xl font-bold text-[#1C1C1E]">{stats.lowStockItems}</h3>
           </div>
           <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-600"><AlertTriangle size={22} /></div>
         </div>
@@ -226,20 +226,20 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         
         {/* Chart 1: Daily Volume */}
-        <div className="bg-white border rounded-2xl p-6 shadow-sm">
+        <div className="bg-white border border-[#E0DDD6] rounded-2xl p-6 shadow-sm">
           <p className="text-[10px] font-bold tracking-wider uppercase text-[#C9A84C] mb-1">Last 7 Days</p>
-          <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <TrendingUp size={18} className="text-slate-500" /> Items Sold Day-by-Day
+          <h2 className="text-lg font-bold text-[#1C1C1E] mb-6 flex items-center gap-2">
+            <TrendingUp size={18} className="text-[#C9A84C]" /> Items Sold Day-by-Day
           </h2>
           <div className="w-full h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailySalesData}>
                 <XAxis dataKey="day" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip cursor={{ fill: "#F8FAFC" }} />
-                <Bar dataKey="itemsSold" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={45}>
+                <Tooltip cursor={{ fill: "#FAF9F7" }} />
+                <Bar dataKey="itemsSold" fill="#1C1C1E" radius={[4, 4, 0, 0]} maxBarSize={45}>
                   {dailySalesData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.itemsSold > 0 ? "#3B82F6" : "#E2E8F0"} />
+                    <Cell key={`cell-${index}`} fill={entry.itemsSold > 0 ? "#1C1C1E" : "#FAF9F7"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -248,9 +248,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* Chart 2: Most Sold Items */}
-        <div className="bg-white border rounded-2xl p-6 shadow-sm">
+        <div className="bg-white border border-[#E0DDD6] rounded-2xl p-6 shadow-sm">
           <p className="text-[10px] font-bold tracking-wider uppercase text-[#C9A84C] mb-1">Performance</p>
-          <h2 className="text-lg font-bold text-slate-900 mb-6">Best Selling Products (Qty)</h2>
+          <h2 className="text-lg font-bold text-[#1C1C1E] mb-6">Best Selling Products (Qty)</h2>
           <div className="w-full h-72">
             {mostSoldData.length === 0 ? (
               <div className="h-full flex items-center justify-center text-slate-400 text-sm">No sales data available yet.</div>
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
                 <BarChart data={mostSoldData} layout="vertical">
                   <XAxis type="number" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis dataKey="name" type="category" stroke="#94A3B8" fontSize={11} width={100} tickLine={false} axisLine={false} />
-                  <Tooltip cursor={{ fill: "#F8FAFC" }} />
+                  <Tooltip cursor={{ fill: "#FAF9F7" }} />
                   <Bar dataKey="qty" radius={[0, 4, 4, 0]} maxBarSize={25}>
                     {mostSoldData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -274,28 +274,28 @@ export default function AdminDashboard() {
       </div>
 
       {/* BOTTOM SECTION: Last 5 Pending Orders */}
-      <div className="bg-white border rounded-2xl p-6 shadow-sm overflow-hidden">
+      <div className="bg-white border border-[#E0DDD6] rounded-2xl p-6 shadow-sm overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <div>
             <p className="text-[10px] font-bold tracking-wider uppercase text-[#C9A84C] mb-1">Fulfillment Task</p>
-            <h2 className="text-lg font-bold text-slate-900">Last 5 Pending Orders</h2>
+            <h2 className="text-lg font-bold text-[#1C1C1E]">Last 5 Pending Orders</h2>
           </div>
           <button 
             onClick={() => router.push("/orders")}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+            className="text-xs font-bold text-[#1C1C1E] hover:text-[#C9A84C] hover:underline"
           >
             Manage All Orders
           </button>
         </div>
 
         {pendingOrders.length === 0 ? (
-          <div className="text-center text-slate-400 text-sm py-8 border-2 border-dashed border-slate-100 rounded-xl">
+          <div className="text-center text-slate-400 text-sm py-8 border-2 border-dashed border-[#E0DDD6] rounded-xl">
             Fantastic! No pending orders remaining to process.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b">
+              <thead className="bg-[#FAF9F7] border-b border-[#E0DDD6]">
                 <tr className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   <th className="p-4">Customer</th>
                   <th className="p-4">Items</th>
@@ -303,27 +303,27 @@ export default function AdminDashboard() {
                   <th className="p-4">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y text-sm">
+              <tbody className="divide-y divide-[#E0DDD6] text-sm">
                 {pendingOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50 transition">
+                  <tr key={order.id} className="hover:bg-[#FAF9F7] transition">
                     <td className="p-4">
-                      <div className="font-bold text-slate-900">{order.customerName}</div>
+                      <div className="font-bold text-[#1C1C1E]">{order.customerName}</div>
                       <div className="text-xs text-slate-400 uppercase tracking-wide">#{order.id.slice(-6)}</div>
                     </td>
                     <td className="p-4">
                       <ul className="text-xs text-slate-600 space-y-0.5">
                         {order.items.map((item, idx) => (
-                          <li key={idx}><span className="font-bold text-slate-800">{item.quantity}x</span> {item.name}</li>
+                          <li key={idx}><span className="font-bold text-[#1C1C1E]">{item.quantity}x</span> {item.name}</li>
                         ))}
                       </ul>
                     </td>
-                    <td className="p-4 font-bold text-slate-900">
+                    <td className="p-4 font-bold text-[#1C1C1E]">
                       LKR {order.totalAmount.toLocaleString()}
                     </td>
                     <td className="p-4">
                       <button 
                         onClick={() => router.push("/orders")}
-                        className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-100 transition"
+                        className="bg-[#1C1C1E] text-[#C9A84C] text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[#2A2A2E] transition"
                       >
                         Process
                       </button>

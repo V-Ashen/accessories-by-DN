@@ -196,31 +196,31 @@ export default function ManageStaffPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-extrabold text-[#0f172a] mb-8">Manage Staff</h1>
+      <h1 className="text-3xl font-extrabold text-[#1C1C1E] mb-8 tracking-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Manage Staff</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Add/Edit Form */}
-        <div className="bg-white border rounded-2xl p-6 shadow-sm h-fit">
-          <h2 className="text-xl font-bold mb-6">{editingUser ? "Edit Staff Member" : "Add Staff Member"}</h2>
+        <div className="bg-white border border-[#E0DDD6] rounded-2xl p-6 shadow-sm h-fit">
+          <h2 className="text-xl font-bold mb-6 text-[#1C1C1E]">{editingUser ? "Edit Staff Member" : "Add Staff Member"}</h2>
           <form onSubmit={editingUser ? handleUpdateStaff : handleAddStaff} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-1">Full Name</label>
-              <input required value={name} onChange={e => setName(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Full Name</label>
+              <input required value={name} onChange={e => setName(e.target.value)} className="w-full bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-3 outline-none focus:border-[#C9A84C] transition" />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Email Address</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Email Address</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-3 outline-none focus:border-[#C9A84C] transition" />
             </div>
             {!editingUser && ( // Password only for new users
               <div>
-                <label className="block text-sm font-semibold mb-1">Password</label>
-                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Password</label>
+                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-3 outline-none focus:border-[#C9A84C] transition" />
               </div>
             )}
             
             <div>
-              <label className="block text-sm font-semibold mb-1">Assigned Role</label>
-              <select required value={selectedRoleName} onChange={e => setSelectedRoleName(e.target.value)} className="w-full border rounded-lg p-2.5 outline-none bg-white focus:ring-2 focus:ring-blue-500">
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Assigned Role</label>
+              <select required value={selectedRoleName} onChange={e => setSelectedRoleName(e.target.value)} className="w-full bg-[#FAF9F7] border border-[#E0DDD6] rounded-xl p-3 outline-none focus:border-[#C9A84C] transition">
                 <option value="">Select...</option>
                 {roles.map(r => (
                   // RBAC: Admin (1) cannot assign Master Admin (0) role
@@ -230,11 +230,11 @@ export default function ManageStaffPage() {
                 ))}
               </select>
             </div>
-            <button type="submit" disabled={loading} className={`w-full text-white font-bold py-3 rounded-lg transition mt-4 ${editingUser ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}>
+            <button type="submit" disabled={loading} className={`w-full text-white font-bold py-3.5 rounded-xl shadow-md transition mt-6 ${editingUser ? "bg-[#1C1C1E] text-[#C9A84C] hover:bg-[#2A2A2E]" : "bg-[#C9A84C] text-[#1C1C1E] hover:bg-[#D4B65F]"}`}>
               {loading ? (editingUser ? "Updating..." : "Adding...") : (editingUser ? "Update Member" : "Add Member")}
             </button>
             {editingUser && (
-                <button type="button" onClick={() => {setEditingUser(null); setName(""); setEmail(""); setPassword(""); setSelectedRoleName("");}} disabled={loading} className="w-full bg-slate-400 text-white font-bold py-3 rounded-lg hover:bg-slate-500 transition mt-2">
+                <button type="button" onClick={() => {setEditingUser(null); setName(""); setEmail(""); setPassword(""); setSelectedRoleName("");}} disabled={loading} className="w-full bg-[#FAF9F7] text-slate-600 border border-[#E0DDD6] font-bold py-3.5 rounded-xl hover:bg-[#E0DDD6] transition mt-2">
                     Cancel Edit
                 </button>
             )}
@@ -242,43 +242,43 @@ export default function ManageStaffPage() {
         </div>
 
         {/* Right: Staff Table */}
-        <div className="lg:col-span-2 bg-white border rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b">
+        <div className="lg:col-span-2 bg-white border border-[#E0DDD6] rounded-2xl shadow-sm overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-[#FAF9F7] border-b border-[#E0DDD6]">
               <tr>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-[#E0DDD6]">
               {staff.map(user => (
-                <tr key={user.id} className="hover:bg-slate-50">
-                  <td className="p-4 font-bold text-slate-900">{user.displayName || "Unknown"}</td>
-                  <td className="p-4 text-slate-600 text-sm">{user.email}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold tracking-wide ${
-                        user.roleCode === 0 ? "bg-red-100 text-red-700" :
-                        user.roleCode === 1 ? "bg-blue-100 text-blue-700" :
-                        "bg-green-100 text-green-700"
+                <tr key={user.id} className="hover:bg-[#FAF9F7] transition">
+                  <td className="p-5 font-bold text-[#1C1C1E]">{user.displayName || "Unknown"}</td>
+                  <td className="p-5 text-slate-500 text-sm">{user.email}</td>
+                  <td className="p-5">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        user.roleCode === 0 ? "bg-[#1C1C1E] text-[#C9A84C]" :
+                        user.roleCode === 1 ? "bg-slate-100 text-slate-700 border border-slate-200" :
+                        "bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20"
                     }`}>
                       {user.roleName || `Level ${user.roleCode}`}
                     </span>
                   </td>
-                  <td className="p-4 flex gap-4 text-slate-400">
+                  <td className="p-5 flex gap-3 text-slate-400">
                     {/* RBAC for action buttons */}
                     {user.roleCode === 0 ? (
-                      <span className="text-xs italic text-slate-500">Master Admin</span>
+                      <span className="text-xs italic text-[#C9A84C]">Master Admin</span>
                     ) : (
                       <>
                         {/* Only Admin (0 or 1) can edit if they have permission and not editing a Master Admin */}
                         {(roleCode === 0 || (roleCode === 1 && hasPermission("manage staff"))) && (
-                          <button onClick={() => handleEditClick(user)} className="hover:text-blue-600"><Edit size={18} /></button>
+                          <button onClick={() => handleEditClick(user)} className="hover:text-[#C9A84C] p-2 bg-white border border-[#E0DDD6] rounded-lg hover:bg-[#1C1C1E] transition"><Edit size={16} /></button>
                         )}
                         {/* Only Admin (0 or 1) can delete if they have permission and not deleting a Master Admin */}
                         {(roleCode === 0 || (roleCode === 1 && hasPermission("manage staff"))) && (
-                          <button onClick={() => handleDeleteStaff(user)} className="hover:text-red-600"><Trash2 size={18} /></button>
+                          <button onClick={() => handleDeleteStaff(user)} className="hover:text-red-600 p-2 bg-white border border-[#E0DDD6] rounded-lg hover:bg-red-50 transition"><Trash2 size={16} /></button>
                         )}
                       </>
                     )}
