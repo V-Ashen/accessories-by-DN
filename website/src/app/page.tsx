@@ -11,7 +11,7 @@ import ContactSection from "@/components/ContactSection";
 // No direct getProducts call here anymore, ProductGridPaginated handles it
 export default async function ShopHome() {
   return (
-    <main className="min-h-screen bg-white ">
+    <main className="min-h-screen bg-[#FAF9F7]">
       
       
       {/* 1. Hero Section (with Moving Banners & Catchphrase) */}
@@ -23,11 +23,11 @@ export default async function ShopHome() {
       {/* 2. Services Section (Why Choose Us & Reviews) */}
       <ServicesSection />
 
-            {/* 3. About Section (Our Story & Policies) */}
-      <AboutSection /> {/* <-- RENDER IT HERE */}
+      {/* 3. About Section (Our Story & Policies) */}
+      <AboutSection /> 
 
       {/* 4. Contact Section */}
-      <ContactSection /> {/* <-- RENDER IT HERE */}
+      <ContactSection /> 
 
     </main>
   );

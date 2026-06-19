@@ -71,15 +71,20 @@ export default function ProductGridPaginated() {
       {/* Section header */}
       <div className="flex items-end justify-between mb-10">
         <div>
-          <p className="text-[11px] uppercase tracking-widest text-slate-400 mb-1">Curated picks</p>
-          <h2 className="text-2xl font-medium text-slate-900">Trending & latest</h2>
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">Curated picks</p>
+          <h2 
+            className="text-[2.6rem] font-light text-[#1C1C1E] leading-tight tracking-wide"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            Trending & latest
+          </h2>
         </div>
         <button
           onClick={() => router.push("/shop")}
-          className="hidden sm:flex items-center gap-1.5 text-[13px] font-medium text-slate-500 hover:text-slate-900 transition"
+          className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#1C1C1E] border border-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#FAF9F7] px-4 py-2 rounded-full transition"
         >
           View all
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </button>
@@ -96,7 +101,7 @@ export default function ProductGridPaginated() {
       <div className="sm:hidden text-center mt-10">
         <button
           onClick={() => router.push("/shop")}
-          className="inline-flex items-center gap-2 bg-slate-900 text-white text-[13px] font-medium py-2.5 px-6 rounded-full hover:bg-slate-700 active:scale-95 transition"
+          className="inline-flex items-center justify-center gap-2 w-full border border-[#1C1C1E] text-[#1C1C1E] text-[11px] font-bold uppercase tracking-widest py-3 hover:bg-[#1C1C1E] hover:text-[#FAF9F7] transition-colors"
         >
           View all products
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

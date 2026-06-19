@@ -144,6 +144,20 @@ export default function ShopPage() {
           {/* Sidebar Filters (Desktop) / Top Filters (Mobile) */}
           <aside className="w-full lg:w-64 flex-shrink-0">
             <div className="lg:sticky lg:top-28 space-y-6">
+
+              {/* Track Order */}
+              <button
+                onClick={() => router.push("/track-order")}
+                className="w-full flex items-center justify-center gap-2 bg-[#1C1C1E] text-[#C9A84C] text-[11px] font-bold uppercase tracking-widest py-3.5 hover:bg-[#2A2A2E] transition-colors shadow-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 22h14"/>
+                  <path d="M5 2h14"/>
+                  <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+                  <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                </svg>
+                Track My Order
+              </button>
               
               {/* Search */}
               <div className="relative">

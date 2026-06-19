@@ -84,10 +84,15 @@ export default function ServicesSection() {
         <div className="max-w-5xl mx-auto">
 
           <div className="mb-10">
-            <p className="text-[11px] uppercase tracking-widest text-[#C9A84C] font-medium mb-1">
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
               Our promise
             </p>
-            <h2 className="text-2xl font-medium text-slate-900">Why choose us</h2>
+            <h2 
+              className="text-[2.6rem] font-light text-[#1C1C1E] leading-tight tracking-wide"
+              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+            >
+              Why choose us
+            </h2>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -155,10 +160,15 @@ export default function ServicesSection() {
         <div className="max-w-7xl mx-auto">
 
           <div className="text-center mb-12">
-            <p className="text-[11px] uppercase tracking-widest text-[#C9A84C] font-medium mb-1">
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
               Testimonials
             </p>
-            <h2 className="text-2xl font-medium text-slate-900">What our customers say</h2>
+            <h2 
+              className="text-[2.6rem] font-light text-[#1C1C1E] leading-tight tracking-wide"
+              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+            >
+              What our customers say
+            </h2>
           </div>
 
           {loadingReviews ? (
