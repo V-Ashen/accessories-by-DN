@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ProductCard from "@/components/ProductCard";
-import { ChevronLeft, ChevronRight, PackageSearch } from "lucide-react"; 
+import { ChevronLeft, ChevronRight, Search } from "lucide-react"; 
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
-const ITEMS_PER_PAGE = 8; 
+const ITEMS_PER_PAGE = 12; // Increased for standard grid
 
 interface Product {
   id: string;
@@ -123,95 +123,126 @@ export default function ShopPage() {
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
 
-  const handleTrackOrderClick = () => {
-    if (!user) {
-      setAuthModalOpen(true); 
-    } else {
-      router.push("/track-order"); 
-    }
-  };
-
-  if (loading) return <p className="text-center text-slate-500 py-20">Loading Shop...</p>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#1C1C1E] font-medium tracking-widest uppercase text-xs">Loading Collections...</div>;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        
-        <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-          <h1 className="text-3xl font-extrabold text-[#1C1C1E] tracking-tight">Our Collections</h1>
+    <div className="min-h-screen bg-[#FAF9F7] pt-20 pb-20">
+      
+      {/* Hero Banner */}
+      <div className="bg-[#1C1C1E] text-center py-16 px-4 mb-8 md:mb-12">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-[#FAF9F7] tracking-tight mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+          Our Collections
+        </h1>
+        <p className="text-[#C9A84C] text-[10px] md:text-xs tracking-[0.2em] uppercase font-semibold">
+          Curated Elegance for Every Lifestyle
+        </p>
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           
-          <button 
-            onClick={handleTrackOrderClick}
-            className="flex items-center gap-2 bg-[#C9A84C] text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#b0903a] shadow-md transition-all active:scale-95"
-          >
-            <PackageSearch size={16} /> Track My Orders
-          </button>
-        </div>
+          {/* Sidebar Filters (Desktop) / Top Filters (Mobile) */}
+          <aside className="w-full lg:w-64 flex-shrink-0">
+            <div className="lg:sticky lg:top-28 space-y-6">
+              
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search pieces..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#E0DDD6] rounded-none text-sm outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C] transition"
+                />
+              </div>
 
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-10">
-          <input 
-            type="text" 
-            placeholder="Search products..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full md:max-w-xs border border-[#E0DDD6] bg-white rounded-full px-5 py-2.5 text-sm outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C] transition"
-          />
+              {/* Categories Desktop */}
+              <div className="hidden lg:block">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1C1C1E] mb-4 pb-2 border-b border-[#E0DDD6]">Categories</h3>
+                <ul className="space-y-3">
+                  {categories.map(category => (
+                    <li key={category}>
+                      <button
+                        onClick={() => setActiveCategory(category)}
+                        className={`text-sm tracking-wide transition-colors ${
+                          activeCategory === category 
+                            ? "font-bold text-[#C9A84C]" 
+                            : "font-medium text-slate-500 hover:text-[#1C1C1E]"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-200 ${
-                  activeCategory === category 
-                    ? "bg-[#C9A84C] text-white shadow-md" 
-                    : "bg-white text-slate-500 border border-[#E0DDD6] hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
+              {/* Categories Mobile (Horizontal Scroll) */}
+              <div className="lg:hidden">
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+                  {categories.map(category => (
+                    <button
+                      key={category}
+                      onClick={() => setActiveCategory(category)}
+                      className={`whitespace-nowrap px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                        activeCategory === category 
+                          ? "bg-[#1C1C1E] text-[#C9A84C] border-[#1C1C1E]" 
+                          : "bg-white text-slate-500 border-[#E0DDD6] hover:border-[#1C1C1E] hover:text-[#1C1C1E]"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-20 bg-white border border-[#E0DDD6] rounded-2xl">
-            <p className="text-slate-500 font-medium">No products match your search or filter.</p>
-          </div>
-        ) : (
-          <div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {currentDisplayedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
             </div>
+          </aside>
 
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-16">
-                <button
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-full border border-[#E0DDD6] bg-white text-[#1C1C1E] hover:bg-[#FAF9F7] disabled:opacity-30 disabled:cursor-not-allowed transition"
-                >
-                  <ChevronLeft size={20} />
-                </button>
+          {/* Product Grid */}
+          <main className="flex-1">
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-20 bg-white border border-[#E0DDD6]">
+                <p className="text-slate-500 font-medium">No pieces found matching your criteria.</p>
+              </div>
+            ) : (
+              <div>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+                  {currentDisplayedProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
 
-                <span className="text-sm font-semibold text-slate-600 tracking-widest uppercase">
-                  Page {currentPage} of {totalPages}
-                </span>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-4 mt-16 pt-8 border-t border-[#E0DDD6]">
+                    <button
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                      className="p-3 bg-white border border-[#E0DDD6] text-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#C9A84C] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
 
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-full border border-[#E0DDD6] bg-white text-[#1C1C1E] hover:bg-[#FAF9F7] disabled:opacity-30 disabled:cursor-not-allowed transition"
-                >
-                  <ChevronRight size={20} />
-                </button>
+                    <span className="text-[11px] font-bold text-slate-500 tracking-widest uppercase">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className="p-3 bg-white border border-[#E0DDD6] text-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#C9A84C] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
+          </main>
 
+        </div>
       </div>
     </div>
   );

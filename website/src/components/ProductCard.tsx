@@ -20,49 +20,49 @@ export default function ProductCard({ product }: { product: any }) {
   return (
     <div
       onClick={handleCardClick}
-      className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden cursor-pointer hover:-translate-y-0.5 transition-transform duration-200"
+      className="group flex flex-col h-full bg-transparent overflow-hidden cursor-pointer"
     >
       {/* Image */}
-      <div className="relative w-full h-[200px] md:h-[230px] bg-slate-50 overflow-hidden">
+      <div className="relative w-full aspect-[3/4] bg-slate-50 overflow-hidden mb-4">
         <img
           src={product.images[0] || "/placeholder-image.jpg"}
-          alt={`${product.name} - Trendy Aesthetic Accessory | Accessories by DN Sri Lanka`}
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+          alt={`${product.name} - Accessories by DN`}
+          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
         />
+        
+        {/* Badges */}
         {product.stockQuantity <= 5 && product.stockQuantity > 0 && (
-          <span className="absolute top-2.5 left-2.5 bg-amber-50 text-amber-700 text-[11px] font-medium px-2.5 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-[#FAF9F7]/90 backdrop-blur-sm text-[#1C1C1E] text-[10px] font-bold uppercase tracking-wider px-3 py-1 border border-[#E0DDD6]">
             Only {product.stockQuantity} left
           </span>
         )}
       </div>
 
       {/* Info */}
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="flex flex-col text-center px-2 flex-grow">
         {product.category && (
-          <p className="text-[11px] uppercase tracking-widest text-slate-400 mb-1">
+          <p className="text-[10px] uppercase tracking-widest text-[#C9A84C] mb-1.5">
             {product.category}
           </p>
         )}
-        <h3 className="text-[15px] font-medium text-slate-900 leading-snug mb-1.5">
+        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-[#1C1C1E] leading-snug mb-1.5" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
           {product.name}
         </h3>
-        <p className="text-base font-medium text-slate-900 mb-4">
+        <p className="text-xs sm:text-sm font-medium text-slate-500 mb-4">
           LKR {product.price.toLocaleString()}
         </p>
 
-        {/* Add to Cart */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            addToCart(product);
-          }}
-          className="mt-auto w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-[13px] font-medium py-2.5 rounded-full hover:bg-slate-700 active:scale-95 transition"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
-          </svg>
-          Add to cart
-        </button>
+        <div className="mt-auto pt-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              addToCart(product);
+            }}
+            className="w-full bg-transparent border border-[#1C1C1E] text-[#1C1C1E] text-[10px] sm:text-[11px] font-bold uppercase tracking-widest py-2.5 sm:py-3 hover:bg-[#1C1C1E] hover:text-[#C9A84C] transition-colors"
+          >
+            Add to Cart
+          </button>
+        </div>
       </div>
     </div>
   );

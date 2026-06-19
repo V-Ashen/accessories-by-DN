@@ -57,7 +57,7 @@ export default function CartDrawer() {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 py-2">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-center pb-16">
               <div className="w-14 h-14 rounded-full bg-[#1C1C1E] flex items-center justify-center">
@@ -83,35 +83,35 @@ export default function CartDrawer() {
             cart.map((item) => (
               <div
                 key={item.id}
-                className="flex gap-4 bg-white border border-[#E0DDD6] rounded-xl p-3"
+                className="flex gap-4 bg-transparent border-b border-[#E0DDD6] py-5 last:border-0"
               >
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-18 h-18 min-w-[72px] min-h-[72px] object-cover rounded-lg border border-[#E0DDD6]"
+                  className="w-20 h-24 min-w-[80px] min-h-[96px] object-cover bg-slate-50"
                 />
-                <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+                <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
                   <div>
                     <h3
-                      className="text-sm font-semibold text-[#1C1C1E] tracking-wide truncate"
+                      className="text-base font-semibold text-[#1C1C1E] leading-snug"
                       style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
                     >
                       {item.name}
                     </h3>
-                    <p className="text-[11px] text-[#888] tracking-widest uppercase mt-0.5">
+                    <p className="text-[10px] text-[#888] tracking-widest uppercase mt-1">
                       Qty: {item.quantity}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-[#1C1C1E]">
+                  <p className="text-sm font-bold text-[#1C1C1E]">
                     LKR {(item.price * item.quantity).toLocaleString()}
                   </p>
                 </div>
                 <button
                   onClick={() => removeFromCart(item.id)}
                   aria-label={`Remove ${item.name}`}
-                  className="self-start mt-1 w-6 h-6 flex items-center justify-center rounded-full border border-[#E0DDD6] text-[#aaa] hover:border-red-300 hover:text-red-400 transition-all duration-200 flex-shrink-0"
+                  className="self-start mt-1 w-6 h-6 flex items-center justify-center rounded-full text-[#aaa] hover:text-[#1C1C1E] hover:bg-[#E0DDD6] transition-all duration-200 flex-shrink-0"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -137,7 +137,7 @@ export default function CartDrawer() {
             </p>
             <button
               onClick={handleCheckoutClick}
-              className="w-full bg-[#1C1C1E] text-[#FAF9F7] text-xs font-semibold tracking-widest uppercase py-4 rounded-full hover:bg-[#333] active:scale-[0.98] transition-all duration-200"
+              className="w-full bg-[#1C1C1E] text-[#C9A84C] text-[11px] font-bold tracking-widest uppercase py-4 hover:bg-[#2A2A2E] active:scale-[0.98] transition-all duration-200 shadow-md"
             >
               Proceed to Checkout
             </button>
