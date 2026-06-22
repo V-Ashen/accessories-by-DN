@@ -15,6 +15,7 @@ interface CartStore {
   setCartOpen: (isOpen: boolean) => void;
   addToCart: (product: any) => void;
   removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: () => number; // Subtotal of items
   deliveryCharge: () => number; // NEW: Calculates delivery
@@ -69,6 +70,16 @@ export const useCartStore = create<CartStore>((set, get) => ({
   removeFromCart: (id) => {
     set((state) => ({
       cart: state.cart.filter((item) => item.id !== id),
+    }));
+  },
+
+  updateQuantity: (id, quantity) => {
+    set((state) => ({
+      cart: state.cart.map((item) =>
+        item.id === id 
+          ? { ...item, quantity: Math.max(1, Math.min(quantity, item.maxStock)) } 
+          : item
+      ),
     }));
   },
 

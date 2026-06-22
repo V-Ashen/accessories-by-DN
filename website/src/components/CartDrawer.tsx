@@ -5,7 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
 export default function CartDrawer() {
-  const { cart, isCartOpen, setCartOpen, removeFromCart, cartTotal } = useCartStore();
+  const { cart, isCartOpen, setCartOpen, removeFromCart, updateQuantity, cartTotal } = useCartStore();
   const { user, setAuthModalOpen } = useAuthStore();
   const router = useRouter();
 
@@ -98,9 +98,25 @@ export default function CartDrawer() {
                     >
                       {item.name}
                     </h3>
-                    <p className="text-[10px] text-[#888] tracking-widest uppercase mt-1">
-                      Qty: {item.quantity}
-                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center border border-[#E0DDD6] rounded-full px-2 py-0.5 w-fit">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="w-5 h-5 flex items-center justify-center text-[#888] hover:text-[#1C1C1E] transition"
+                        >
+                          -
+                        </button>
+                        <span className="text-[11px] font-medium text-[#1C1C1E] w-5 text-center">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="w-5 h-5 flex items-center justify-center text-[#888] hover:text-[#1C1C1E] transition"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <p className="text-sm font-bold text-[#1C1C1E]">
                     LKR {(item.price * item.quantity).toLocaleString()}
