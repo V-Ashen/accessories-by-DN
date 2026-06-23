@@ -5,6 +5,7 @@ import { collection, getDocs, query, where, orderBy, limit } from "firebase/fire
 import { db } from "@/lib/firebase";
 import ProductCard from "./ProductCard";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 interface Product {
   id: string;
@@ -15,6 +16,21 @@ interface Product {
   isActive: boolean;
   createdAt: any;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
 
 export default function ProductGridPaginated() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -55,10 +71,10 @@ export default function ProductGridPaginated() {
 
   if (loading) {
     return (
-      <section className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="w-full bg-[var(--background)] py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-slate-100 animate-pulse aspect-[3/4]" />
+            <div key={i} className="rounded-xl bg-white/5 border border-white/5 animate-pulse aspect-[3/4]" />
           ))}
         </div>
       </section>
@@ -66,48 +82,57 @@ export default function ProductGridPaginated() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8" id="trending">
-
-      {/* Section header */}
-      <div className="flex items-end justify-between mb-10">
-        <div>
-          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">Curated picks</p>
-          <h2 
-            className="text-[2.6rem] font-light text-[#1C1C1E] leading-tight tracking-wide"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+    <section className="w-full bg-[var(--background)] py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden" id="trending">
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Section header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4">
+          <div>
+            <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-[var(--accent)] mb-2" style={{ textShadow: "0 0 10px var(--accent-glow)" }}>Curated picks</p>
+            <h2 
+              className="text-3xl sm:text-4xl lg:text-5xl font-medium text-[var(--foreground)] leading-tight tracking-tight"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Trending & latest
+            </h2>
+          </div>
+          <button
+            onClick={() => router.push("/shop")}
+            className="hidden sm:flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[var(--foreground)] border-b border-[var(--foreground)] pb-1 hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all duration-300 group"
           >
-            Trending & latest
-          </h2>
+            View all
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform group-hover:translate-x-1 transition-transform">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={() => router.push("/shop")}
-          className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#1C1C1E] border border-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#FAF9F7] px-4 py-2 rounded-full transition"
-        >
-          View all
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
-      </div>
 
-      {/* Product grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-
-      {/* Mobile CTA — only visible on small screens */}
-      <div className="sm:hidden text-center mt-10">
-        <button
-          onClick={() => router.push("/shop")}
-          className="inline-flex items-center justify-center gap-2 w-full border border-[#1C1C1E] text-[#1C1C1E] text-[11px] font-bold uppercase tracking-widest py-3 hover:bg-[#1C1C1E] hover:text-[#FAF9F7] transition-colors"
+        {/* Product grid */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
         >
-          View all products
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
+          {products.map((product) => (
+            <motion.div key={product.id} variants={itemVariants}>
+              <ProductCard product={product} />
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Mobile CTA — only visible on small screens */}
+        <div className="sm:hidden text-center mt-10">
+          <button
+            onClick={() => router.push("/shop")}
+            className="inline-flex items-center justify-center gap-2 w-full bg-white/5 border border-[var(--border)] text-[var(--foreground)] text-[11px] font-bold uppercase tracking-widest py-3.5 rounded-full hover:bg-[var(--accent)] hover:text-[#0f1115] transition-colors shadow-lg"
+          >
+            View all products
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </section>
   );

@@ -62,24 +62,24 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[#FAF9F7] w-full max-w-sm rounded-2xl border border-[#E0DDD6] overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
+      <div className="glass-glow bg-[var(--background)] w-full max-w-sm rounded-2xl border border-[var(--border)] overflow-hidden shadow-2xl">
 
         {/* Header band */}
-        <div className="bg-[#1C1C1E] px-8 py-6 relative">
-          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-0.5">
+        <div className="bg-white/5 border-b border-[var(--border)] px-8 py-6 relative">
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--accent)] mb-0.5" style={{ textShadow: "0 0 8px var(--accent-glow)" }}>
             {isLogin ? "Welcome back" : "Join us"}
           </p>
           <h2
-            className="text-2xl font-semibold text-white tracking-wide"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+            className="text-2xl font-semibold text-[var(--foreground)] tracking-wide"
+            style={{ fontFamily: "var(--font-serif)" }}
           >
             {isLogin ? "Sign In" : "Create Account"}
           </h2>
           <button
             onClick={() => setAuthModalOpen(false)}
             aria-label="Close"
-            className="absolute top-5 right-5 w-7 h-7 flex items-center justify-center rounded-full border border-white/20 text-white/50 hover:border-white/50 hover:text-white transition-all duration-200"
+            className="absolute top-5 right-5 w-7 h-7 flex items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all duration-200"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -92,7 +92,7 @@ export default function AuthModal() {
 
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+              <label className="block text-[10px] font-semibold tracking-widest uppercase text-[var(--muted)] mb-1.5">
                 Email
               </label>
               <input
@@ -101,11 +101,11 @@ export default function AuthModal() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-[#E0DDD6] bg-white rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
+                className="w-full border border-[var(--border)] bg-transparent rounded-xl px-4 py-3 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] transition-colors duration-200"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#888] mb-1.5">
+              <label className="block text-[10px] font-semibold tracking-widest uppercase text-[var(--muted)] mb-1.5">
                 Password
               </label>
               <input
@@ -114,14 +114,14 @@ export default function AuthModal() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-[#E0DDD6] bg-white rounded-xl px-4 py-3 text-sm text-[#1C1C1E] placeholder-[#bbb] focus:outline-none focus:border-[#C9A84C] transition-colors duration-200"
+                className="w-full border border-[var(--border)] bg-transparent rounded-xl px-4 py-3 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] transition-colors duration-200"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1C1C1E] text-[#FAF9F7] text-[10px] font-semibold tracking-widest uppercase py-3.5 rounded-full hover:bg-[#333] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+              className="w-full bg-[var(--accent)] text-[#0f1115] text-[10px] font-bold tracking-widest uppercase py-3.5 rounded-full hover:bg-white active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1 shadow-[0_0_15px_var(--accent-glow)]"
             >
               {loading ? "Please wait…" : isLogin ? "Sign In" : "Sign Up"}
             </button>
@@ -129,16 +129,16 @@ export default function AuthModal() {
 
           {/* Divider */}
           <div className="my-5 flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#E0DDD6]" />
-            <span className="text-[10px] tracking-widest uppercase text-[#bbb]">or</span>
-            <div className="flex-1 h-px bg-[#E0DDD6]" />
+            <div className="flex-1 h-px bg-[var(--border)]" />
+            <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">or</span>
+            <div className="flex-1 h-px bg-[var(--border)]" />
           </div>
 
           {/* Google */}
           <button
             onClick={handleGoogleAuth}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2.5 border border-[#E0DDD6] bg-white text-[#1C1C1E] text-xs font-semibold tracking-wide py-3 rounded-full hover:border-[#C9A84C] hover:bg-[#FAF9F7] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2.5 border border-[var(--border)] bg-transparent text-[var(--foreground)] text-xs font-semibold tracking-wide py-3 rounded-full hover:border-[var(--accent)] hover:bg-white/5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -149,11 +149,11 @@ export default function AuthModal() {
           </button>
 
           {/* Toggle */}
-          <p className="mt-6 text-center text-xs text-[#888]">
+          <p className="mt-6 text-center text-xs text-[var(--muted)]">
             {isLogin ? "Don't have an account?" : "Already have an account?"}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="ml-1.5 font-semibold text-[#1C1C1E] hover:text-[#C9A84C] transition-colors duration-150"
+              className="ml-1.5 font-semibold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-150"
             >
               {isLogin ? "Sign Up" : "Log In"}
             </button>

@@ -5,6 +5,7 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ReviewCard from "./ReviewCard";
 import { Truck, CheckCircle, Award } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Review {
   id: string;
@@ -15,15 +16,15 @@ interface Review {
 
 function SkeletonReview() {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white animate-pulse overflow-hidden">
-      <div className="h-14 bg-slate-100" />
+    <div className="rounded-2xl border border-[var(--border)] bg-white/5 animate-pulse overflow-hidden">
+      <div className="h-14 bg-white/5" />
       <div className="p-5 flex flex-col gap-3">
-        <div className="h-2.5 bg-slate-100 rounded-full w-full" />
-        <div className="h-2.5 bg-slate-100 rounded-full w-5/6" />
-        <div className="h-2.5 bg-slate-100 rounded-full w-2/3" />
-        <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-          <div className="w-7 h-7 rounded-full bg-slate-100" />
-          <div className="h-2.5 bg-slate-100 rounded-full w-1/3" />
+        <div className="h-2.5 bg-white/10 rounded-full w-full" />
+        <div className="h-2.5 bg-white/10 rounded-full w-5/6" />
+        <div className="h-2.5 bg-white/10 rounded-full w-2/3" />
+        <div className="flex items-center gap-3 pt-3 border-t border-[var(--border)]">
+          <div className="w-7 h-7 rounded-full bg-white/10" />
+          <div className="h-2.5 bg-white/10 rounded-full w-1/3" />
         </div>
       </div>
     </div>
@@ -80,115 +81,107 @@ export default function ServicesSection() {
     <div id="services">
 
       {/* Services */}
-      <section className="bg-[#F7F6F3] py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-[var(--background)] py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#161921] pointer-events-none" />
+        <div className="max-w-5xl mx-auto relative z-10">
 
-          <div className="mb-10">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
+          <div className="mb-10 text-center sm:text-left">
+            <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-[var(--accent)] mb-2" style={{ textShadow: "0 0 10px var(--accent-glow)" }}>
               Our promise
             </p>
             <h2 
-              className="text-[2.6rem] font-light text-[#1C1C1E] leading-tight tracking-wide"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              className="text-3xl sm:text-4xl lg:text-5xl font-medium text-[var(--foreground)] leading-tight tracking-tight"
+              style={{ fontFamily: "var(--font-serif)" }}
             >
               Why choose us
             </h2>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {services.map(({ num, icon: Icon, title, body, badge, accent }) => (
-              <div
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {services.map(({ num, icon: Icon, title, body, badge, accent }, index) => (
+              <motion.div
                 key={title}
-                className="group bg-white border-slate-100 rounded-r-2xl flex items-center gap-5 px-6 py-5 transition-colors duration-150 hover:bg-slate-50"
-                style={{
-                  borderTop: "0.5px solid #e5e7eb",
-                  borderRight: "0.5px solid #e5e7eb",
-                  borderBottom: "0.5px solid #e5e7eb",
-                  borderLeft: `3px solid ${accent ? "#C9A84C" : "#1C1C1E"}`,
-                  borderRadius: "0 14px 14px 0",
-                }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group glass-glow rounded-2xl flex flex-col p-6 transition-all duration-300 hover:-translate-y-2 hover:border-[var(--accent)]"
               >
-                {/* Icon */}
-                <div
-                  className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
-                  style={{ background: accent ? "#C9A84C22" : "#1C1C1E" }}
-                >
-                  <Icon
-                    size={16}
-                    strokeWidth={1.5}
-                    style={{ color: accent ? "#C9A84C" : "#fff" }}
-                  />
+                {/* Icon & Number Header */}
+                <div className="flex justify-between items-start mb-6">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-[0_0_20px_var(--accent-glow)] ${accent ? 'bg-[var(--accent)] text-[#0f1115]' : 'bg-white/10 text-[var(--foreground)] border border-white/20'}`}
+                  >
+                    <Icon size={20} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[10px] text-white/30 font-bold tracking-widest">{num}</span>
                 </div>
 
-                {/* Number + text */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-slate-400 font-medium tracking-wide mb-0.5">{num}</p>
-                  <p className="text-[14px] font-medium text-slate-900">{title}</p>
-                  <p className="text-[13px] text-slate-500 leading-relaxed">{body}</p>
+                {/* Text Content */}
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-[var(--foreground)] mb-2 group-hover:text-[var(--accent)] transition-colors">{title}</h3>
+                  <p className="text-sm text-[var(--muted)] leading-relaxed mb-4">{body}</p>
                 </div>
 
                 {/* Badge */}
                 {badge && (
-                  <span
-                    className="hidden sm:inline-block shrink-0 text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap"
-                    style={{
-                      color: "#C9A84C",
-                      border: "0.5px solid #C9A84C66",
-                      background: "#C9A84C11",
-                    }}
-                  >
-                    {badge}
-                  </span>
+                  <div className="mt-auto pt-4 border-t border-[var(--border)]">
+                    <span className="inline-block text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full bg-[var(--accent)] text-[#0f1115] shadow-[0_0_10px_var(--accent-glow)]">
+                      {badge}
+                    </span>
+                  </div>
                 )}
-
-                {/* Chevron */}
-                <svg
-                  className="shrink-0 w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors duration-150"
-                  fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Reviews */}
-      <section className="bg-white py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <section className="bg-[#161921] py-20 px-4 sm:px-6 lg:px-8 border-t border-[var(--border)] relative overflow-hidden">
+        {/* Decorative background glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)] opacity-[0.03] blur-[100px] rounded-full pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
 
-          <div className="text-center mb-12">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C] mb-1">
+          <div className="text-center mb-16">
+            <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-[var(--accent)] mb-2" style={{ textShadow: "0 0 10px var(--accent-glow)" }}>
               Testimonials
             </p>
             <h2 
-              className="text-[2.6rem] font-light text-[#1C1C1E] leading-tight tracking-wide"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              className="text-3xl sm:text-4xl lg:text-5xl font-medium text-[var(--foreground)] leading-tight tracking-tight"
+              style={{ fontFamily: "var(--font-serif)" }}
             >
               What our customers say
             </h2>
           </div>
 
           {loadingReviews ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {Array.from({ length: 3 }).map((_, i) => <SkeletonReview key={i} />)}
             </div>
           ) : reviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400" aria-hidden="true">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-[var(--border)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--muted)]">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
-              <p className="text-slate-700 font-medium mb-1">No reviews yet</p>
-              <p className="text-sm text-slate-400">Be the first to leave one!</p>
+              <p className="text-[var(--foreground)] font-semibold mb-1">No reviews yet</p>
+              <p className="text-sm text-[var(--muted)]">Be the first to leave one!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {reviews.map((review) => (
-                <ReviewCard key={review.id} {...review} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {reviews.map((review, index) => (
+                <motion.div 
+                  key={review.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <ReviewCard {...review} />
+                </motion.div>
               ))}
             </div>
           )}

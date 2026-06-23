@@ -8,15 +8,16 @@ import { useRouter } from "next/navigation";
 import { PackageSearch, ArrowLeft, Clock, CheckCircle2, Truck, Package, X } from "lucide-react";
 
 export default function TrackOrderPage() {
-  const { user } = useAuthStore();
+  const { user, setAuthModalOpen } = useAuthStore();
   const router = useRouter();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Security check: if somehow a guest lands here, send them away
+    // Security check: if somehow a guest lands here, send them away and ask to login
     if (!user) {
       router.push("/");
+      setAuthModalOpen(true);
       return;
     }
 
@@ -42,38 +43,38 @@ export default function TrackOrderPage() {
   // Helper for visual status timeline
   const getStatusDisplay = (status: string) => {
     switch(status) {
-      case "Pending": return { text: "Order Placed", icon: <Clock size={16}/>, color: "text-yellow-600 bg-yellow-50 border-yellow-200" };
-      case "Processing": return { text: "Packing", icon: <Package size={16}/>, color: "text-blue-600 bg-blue-50 border-blue-200" };
-      case "Dispatched": return { text: "On the Way", icon: <Truck size={16}/>, color: "text-purple-600 bg-purple-50 border-purple-200" };
-      case "Completed": return { text: "Delivered", icon: <CheckCircle2 size={16}/>, color: "text-green-600 bg-green-50 border-green-200" };
-      case "Cancelled": return { text: "Cancelled", icon: <X size={16}/>, color: "text-red-600 bg-red-50 border-red-200" };
-      default: return { text: status, icon: <Clock size={16}/>, color: "text-slate-600 bg-slate-50 border-slate-200" };
+      case "Pending": return { text: "Order Placed", icon: <Clock size={16}/>, color: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20" };
+      case "Processing": return { text: "Packing", icon: <Package size={16}/>, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" };
+      case "Dispatched": return { text: "On the Way", icon: <Truck size={16}/>, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" };
+      case "Completed": return { text: "Delivered", icon: <CheckCircle2 size={16}/>, color: "text-green-500 bg-green-500/10 border-green-500/20" };
+      case "Cancelled": return { text: "Cancelled", icon: <X size={16}/>, color: "text-red-500 bg-red-500/10 border-red-500/20" };
+      default: return { text: status, icon: <Clock size={16}/>, color: "text-slate-400 bg-slate-500/10 border-slate-500/20" };
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading your history...</div>;
+  if (loading) return <div className="min-h-screen bg-[var(--background)] flex items-center justify-center text-[var(--muted)] font-medium tracking-widest uppercase text-xs">Loading your history...</div>;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] py-20 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--background)] py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         
-        <button onClick={() => router.push("/shop")} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 mb-8 transition">
+        <button onClick={() => router.push("/shop")} className="flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--accent)] mb-8 transition-colors">
           <ArrowLeft size={16} /> Back to Shop
         </button>
 
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-white rounded-xl shadow-sm border border-[#E0DDD6]"><PackageSearch className="text-[#C9A84C]" /></div>
+          <div className="p-3 bg-white/5 rounded-xl border border-[var(--border)] shadow-[0_0_15px_var(--accent-glow)]"><PackageSearch className="text-[var(--accent)]" /></div>
           <div>
-            <h1 className="text-3xl font-semibold text-[#1C1C1E]" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Order History</h1>
-            <p className="text-xs tracking-widest uppercase text-[#888] mt-1">Tracking for {user?.email}</p>
+            <h1 className="text-3xl font-semibold text-[var(--foreground)]" style={{ fontFamily: "var(--font-serif)" }}>Order History</h1>
+            <p className="text-xs tracking-widest uppercase text-[var(--muted)] mt-1">Tracking for {user?.email}</p>
           </div>
         </div>
 
         {orders.length === 0 ? (
-          <div className="bg-white border border-[#E0DDD6] rounded-2xl p-12 text-center shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">No orders found</h3>
-            <p className="text-slate-500 mb-6">Looks like you haven't placed any orders yet.</p>
-            <button onClick={() => router.push("/shop")} className="bg-[#1C1C1E] text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#333] transition">
+          <div className="glass-glow border border-[var(--border)] rounded-2xl p-12 text-center shadow-sm">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2" style={{ fontFamily: "var(--font-serif)" }}>No orders found</h3>
+            <p className="text-[var(--muted)] mb-6">Looks like you haven't placed any orders yet.</p>
+            <button onClick={() => router.push("/shop")} className="bg-[var(--accent)] text-[#0f1115] px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_15px_var(--accent-glow)]">
               Start Shopping
             </button>
           </div>
@@ -83,21 +84,21 @@ export default function TrackOrderPage() {
               const displayInfo = getStatusDisplay(order.status);
               
               return (
-                <div key={order.id} className="bg-white border border-[#E0DDD6] rounded-2xl p-6 shadow-sm overflow-hidden">
+                <div key={order.id} className="glass-glow border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
                   
                   {/* Order Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E0DDD6] pb-4 mb-4 gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[var(--border)] pb-4 mb-4 gap-4">
                     <div>
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-[#888]">Order ID</p>
-                      <p className="font-mono text-sm font-bold text-[#1C1C1E]">#{order.id.slice(-8).toUpperCase()}</p>
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-[var(--muted)]">Order ID</p>
+                      <p className="font-mono text-sm font-bold text-[var(--foreground)]">#{order.id.slice(-8).toUpperCase()}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-[#888]">Placed On</p>
-                      <p className="text-sm font-semibold text-[#1C1C1E]">{order.createdAt?.toDate().toLocaleDateString()}</p>
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-[var(--muted)]">Placed On</p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{order.createdAt?.toDate().toLocaleDateString()}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-[#888]">Total</p>
-                      <p className="text-sm font-bold text-[#C9A84C]">LKR {order.totalAmount.toLocaleString()}</p>
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-[var(--muted)]">Total</p>
+                      <p className="text-sm font-bold text-[var(--accent)]">LKR {order.totalAmount.toLocaleString()}</p>
                     </div>
                     
                     {/* Status Badge */}
@@ -110,11 +111,11 @@ export default function TrackOrderPage() {
                   {/* Order Items */}
                   <div className="space-y-3">
                     {order.items.map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-4 bg-[#FAF9F7] p-3 rounded-xl border border-slate-100">
-                        <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-slate-200" />
+                      <div key={idx} className="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-[var(--border)]">
+                        <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-[var(--border)] bg-black/20" />
                         <div className="flex-1">
-                          <p className="font-semibold text-sm text-[#1C1C1E]">{item.name}</p>
-                          <p className="text-[10px] uppercase tracking-widest text-[#888] mt-0.5">Qty: {item.quantity}</p>
+                          <p className="font-semibold text-sm text-[var(--foreground)]" style={{ fontFamily: "var(--font-serif)" }}>{item.name}</p>
+                          <p className="text-[10px] uppercase tracking-widest text-[var(--muted)] mt-0.5">Qty: {item.quantity}</p>
                         </div>
                       </div>
                     ))}

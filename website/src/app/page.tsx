@@ -9,7 +9,7 @@ import ServicesSection from "@/components/ServicesSection";
 // No direct getProducts call here anymore, ProductGridPaginated handles it
 export default async function ShopHome() {
   return (
-    <main className="min-h-screen bg-[#FAF9F7]">
+    <main className="min-h-screen bg-[var(--background)]">
       
       
       {/* 1. Hero Section (with Moving Banners & Catchphrase) */}

@@ -49,7 +49,7 @@ function ProductDetailsContent() {
     fetchProductDetails();
   }, [productId, router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-500">Loading Product details...</div>;
+  if (loading) return <div className="min-h-screen bg-[var(--background)] flex items-center justify-center font-bold text-[var(--muted)] tracking-widest uppercase text-xs">Loading Product details...</div>;
   if (!product) return null;
 
   // --- Dynamic AI SEO Description Generator ---
@@ -72,21 +72,21 @@ function ProductDetailsContent() {
   const seoData = generateSEODescription(product.name, product.category);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-24 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--background)] py-24 px-4 sm:px-6 lg:px-8 text-[var(--foreground)]">
       <div className="max-w-5xl mx-auto">
         
         {/* Back Button */}
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 mb-8 transition"
+          className="flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--accent)] mb-8 transition-colors"
         >
           <ArrowLeft size={16} /> Back
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-8 rounded-2xl border shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 glass-glow border border-[var(--border)] p-8 rounded-2xl shadow-sm">
           
           {/* Left: Image Carousel placeholder */}
-          <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden border">
+          <div className="aspect-square bg-black/20 rounded-xl overflow-hidden border border-[var(--border)] relative">
             <img 
               src={product.images[0] || "/placeholder-image.jpg"} 
               alt={`${product.name} - Premium ${product.category || 'Aesthetic Accessory'} | Accessories by DN`} 
@@ -96,40 +96,40 @@ function ProductDetailsContent() {
 
           {/* Right: Info Column */}
           <div className="flex flex-col justify-center">
-            <p className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-1">
+            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-[0.2em] mb-1" style={{ textShadow: "0 0 8px var(--accent-glow)" }}>
               {product.category || "Accessories"}
             </p>
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-4">{product.name}</h1>
+            <h1 className="text-3xl font-semibold text-[var(--foreground)] mb-4 tracking-wide" style={{ fontFamily: "var(--font-serif)" }}>{product.name}</h1>
             
-            <p className="text-2xl font-bold text-slate-900 mb-6">LKR {product.price.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-[var(--accent)] mb-6" style={{ fontFamily: "var(--font-serif)" }}>LKR {product.price.toLocaleString()}</p>
             
             <div className="mb-6">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                product.stockQuantity > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase border ${
+                product.stockQuantity > 0 ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
               }`}>
-                {product.stockQuantity > 0 ? `In Stock (${product.stockQuantity} units)` : "Out of Stock"}
+                {product.stockQuantity > 0 ? `In Stock (${product.stockQuantity})` : "Out of Stock"}
               </span>
             </div>
 
             {/* Product Details accordion */}
-            <div className="border-t pt-6 mt-6 space-y-6">
+            <div className="border-t border-[var(--border)] pt-6 mt-6 space-y-6">
               <div>
-                <h3 className="font-bold text-slate-900 mb-2">Description</h3>
-                <p className="text-slate-600 text-sm leading-relaxed text-justify">
+                <h3 className="font-semibold text-[var(--foreground)] mb-2 text-lg" style={{ fontFamily: "var(--font-serif)" }}>Description</h3>
+                <p className="text-[var(--muted)] text-sm leading-relaxed text-justify">
                   {product.description || seoData.mainText}
                 </p>
               </div>
 
               <div>
-                <h3 className="font-bold text-slate-900 mb-2">Key Features</h3>
-                <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+                <h3 className="font-semibold text-[var(--foreground)] mb-2 text-lg" style={{ fontFamily: "var(--font-serif)" }}>Key Features</h3>
+                <ul className="list-disc list-inside text-sm text-[var(--muted)] space-y-1.5">
                   {seoData.features.map((feat, i) => <li key={i}>{feat}</li>)}
                 </ul>
               </div>
 
               <div>
-                <h3 className="font-bold text-slate-900 mb-2">Care & Usage Tips</h3>
-                <ol className="list-decimal list-inside text-sm text-slate-600 space-y-1">
+                <h3 className="font-semibold text-[var(--foreground)] mb-2 text-lg" style={{ fontFamily: "var(--font-serif)" }}>Care & Usage Tips</h3>
+                <ol className="list-decimal list-inside text-sm text-[var(--muted)] space-y-1.5">
                   {seoData.usage.map((tip, i) => <li key={i}>{tip}</li>)}
                 </ol>
               </div>
@@ -139,9 +139,9 @@ function ProductDetailsContent() {
             <button 
               onClick={() => addToCart(product)}
               disabled={product.stockQuantity === 0}
-              className="mt-8 w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition flex items-center justify-center gap-3 disabled:opacity-50"
+              className="mt-8 w-full bg-[var(--accent)] text-[#0f1115] font-bold text-xs tracking-widest uppercase py-4 rounded-full hover:bg-white active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-[0_0_15px_var(--accent-glow)]"
             >
-              <ShoppingBag size={20} /> Add to Cart
+              <ShoppingBag size={18} /> {product.stockQuantity === 0 ? "Sold Out" : "Add to Cart"}
             </button>
           </div>
 
@@ -154,7 +154,7 @@ function ProductDetailsContent() {
 // Wrapping PDP in Suspense to satisfy Vercel production build rules
 export default function ProductDetailsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-bold text-slate-500">Loading Product details...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--background)] flex items-center justify-center text-[10px] font-bold tracking-widest uppercase text-[var(--muted)]">Loading Product details...</div>}>
       <ProductDetailsContent />
     </Suspense>
   );
