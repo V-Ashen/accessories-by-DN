@@ -6,9 +6,25 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
-        pathname: "/**", 
+        pathname: "/**",
       },
     ],
+  },
+  // --- NEW: Redirect /admin to the separate Admin Panel deployment ---
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: 'https://accessories-by-dn-admin.vercel.app',
+        permanent: true,
+      },
+      // This catches anything typed after /admin (e.g., /admin/orders)
+      {
+        source: '/admin/:path*',
+        destination: 'https://accessories-by-dn-admin.vercel.app/:path*',
+        permanent: true,
+      }
+    ];
   },
 };
 

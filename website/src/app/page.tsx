@@ -5,8 +5,6 @@ import ProductCard from "@/components/ProductCard"; // Still needed by ProductGr
 import HeroSlider from "@/components/HeroSlider"; // NEW
 import ProductGridPaginated from "@/components/ProductGridPaginated"; // NEW
 import ServicesSection from "@/components/ServicesSection";
-import AboutSection from "@/components/AboutSection"; 
-import ContactSection from "@/components/ContactSection";
 
 // No direct getProducts call here anymore, ProductGridPaginated handles it
 export default async function ShopHome() {
@@ -22,12 +20,6 @@ export default async function ShopHome() {
 
       {/* 2. Services Section (Why Choose Us & Reviews) */}
       <ServicesSection />
-
-      {/* 3. About Section (Our Story & Policies) */}
-      <AboutSection /> 
-
-      {/* 4. Contact Section */}
-      <ContactSection /> 
 
     </main>
   );
